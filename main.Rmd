@@ -1,0 +1,303 @@
+---
+title: "R Notebook"
+output: 
+  html_notebook:
+    toc: true
+    toc_float: true
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+```{r include=FALSE}
+library(xts)
+library(rmgarch)
+library(fOptions)
+library(openxlsx)
+library(tidyverse)
+library(lubridate)
+library(SciViews)
+library(ggplot2)
+library(scales)
+options(scipen = 999)
+```
+
+## Greek Letter Risks of Portfolio
+
+### Load Portfolio and Yield Curve
+```{r}
+optionData <- read.xlsx("optiondata.xlsx", rows = c(5:25), detectDates = TRUE, sheet = "Option prices")
+yieldCurve <- read.xlsx("optiondata.xlsx", sheet = "zero-coupon yield curve")
+
+# Get SPX info
+currentInfo <- read.xlsx("optiondata.xlsx", rows = c(1:3), cols = c(1:2), colNames = FALSE, sheet = "Option prices")
+
+DATE <- as.Date(currentInfo[1, 2], origin = "1899-12-30") # Evaluation date 2020/10/30
+SPOT <- currentInfo[2, 2] # Spot price of SPX on evaluation date
+q <- currentInfo[3, 2] # Dividend yield of SPX
+
+optionData
+```
+
+### Time to Expiry
+```{r}
+n <- nrow(optionData) # Number of option positions
+
+# Calculate time to expiry in terms of days
+
+# If the Expiration.Time column Open and we need to minus 6.5/24 
+# If the Expiration.Time column Close and we do not need to minus 6.5/24 
+
+time_to_expiry_days <- rep(0, n)
+
+for (i in 1:n) {
+  t <- optionData$Expiration.Time[i]
+  d <- optionData$Expiration.Date[i]
+  
+  if (t == "Open") {
+    time_to_expiry_days[i] <- d - DATE - (6.5/24)
+  } else {
+    time_to_expiry_days[i] <- d - DATE
+  }
+}
+
+# Add time_to_expiry to optionData
+optionData$time_to_expiry_days <- time_to_expiry_days
+optionData$time_to_expiry_years <- time_to_expiry_days / 365 # Annualized time_to_expiry
+optionData$time_to_expiry_days
+```
+
+### Interest Rates 
+Linear Interpolation of interest rate
+Rn = R1 + (R2 - R1) / (t2 - t1) * (tn - t1)
+```{r}
+rates <- rep(0, n)
+
+# Rates for each position
+for (i in 1:n) {
+  tn <- optionData$time_to_expiry_days[i]
+  
+  # Search through yield curve to find appropriate parameters
+  for (j in 1:nrow(yieldCurve)) {
+    if (yieldCurve$days[j] >= tn) {
+      t1 <- yieldCurve$days[j - 1]
+      t2 <- yieldCurve$days[j]
+      r1 <- yieldCurve$rate[j - 1]
+      r2 <- yieldCurve$rate[j]
+      break
+    }
+  }
+  
+  # Linear interpolation
+  rates[i] <- r1 + (r2 - r1) * (tn - t1) / (t2 - t1)
+}
+
+# Add rates to optionData
+optionData$Rate <- rates / 100 # rates in %
+optionData$Rate
+```
+
+### Implied Volatility
+```{r}
+vol <- rep(0, n)
+
+for (i in 1:n) {
+  vol[i] <- GBSVolatility(price = optionData[i, "Price"], TypeFlag = "c", S = SPOT, X = optionData[i, "Strike.Price"], Time = optionData[i, "time_to_expiry_years"], r = optionData[i, "Rate"], b = optionData[i, "Rate"] - q)
+}
+
+optionData$Implied.volatility <- vol
+optionData$Implied.volatility
+```
+
+### Compute d1 and d2
+equation
+R vectorization soooo gooood
+```{r}
+X <- optionData$Strike.Price
+r <- optionData$Rate
+sig <- optionData$Implied.volatility
+t <- optionData$time_to_expiry_years
+
+optionData$d1 <- ((ln(SPOT/X) + (r - q + 0.5 * sig ^ 2) * t)) / (sig * sqrt(t))
+optionData$d2 <- optionData$d1 - sig * sqrt(t)
+```
+
+### Greeks
+equations
+```{r}
+X <- optionData$Strike.Price
+multiplier <- optionData$Multiplier
+t <- optionData$time_to_expiry_years
+r <- optionData$Rate
+sig <- optionData$Implied.volatility
+d1 <- optionData$d1
+d2 <- optionData$d2
+
+optionData$Delta <- multiplier * exp(-q * t) * pnorm(d1)
+optionData$Gamma <- multiplier * exp(-q * t) * dnorm(d1) / (SPOT * sig * sqrt(t))
+optionData$Theta <- multiplier * {-0.5 * SPOT * sig * exp(-q * t) * dnorm(d1) / sqrt(t) - r * X * exp(-r * t) * pnorm(d2) + q * SPOT * exp(-q * t) * pnorm(d1)}
+optionData$Vega  <- multiplier * SPOT * exp(-q * t) * sqrt(t) * dnorm(d1)
+optionData
+```
+
+### Portfolio Greeks
+```{r}
+portfolioGreeks <- data.frame(row.names = "Portfolio",
+                              Delta = sum(optionData$Delta * optionData$Quantity),
+                              Gamma = sum(optionData$Gamma * optionData$Quantity),
+                              Theta = sum(optionData$Theta * optionData$Quantity),
+                              Vega = sum(optionData$Vega * optionData$Quantity))
+portfolioGreeks
+```
+
+### Portfolio value as SPX value changes
+```{r}
+# Calculate portfolio value for SPX values ranging from -20% to +20% of spot price
+value <- c()
+for (s in as.integer(0.8 * SPOT):as.integer(1.2 * SPOT)) {
+  
+  # Calculate value for each option position
+  value_part <- rep(0, n)
+  for (i in 1:n) {
+    value_part[i] <- optionData[i, "Quantity"] * optionData[i, "Multiplier"] * 
+      GBSOption(TypeFlag = "c", S = s, X = optionData[i, "Strike.Price"], Time = optionData[i, "time_to_expiry_years"], r = optionData[i, "Rate"], b = optionData[i, "Rate"] - q, sigma = optionData[i, "Implied.volatility"])@price
+  }
+  
+  # Append value
+  value <- c(value, sum(value_part))
+}
+
+```
+
+### Data Visualization
+```{r}
+priceChange <- data.frame(SPX = seq(-20, 20, 40 / (as.integer(1.2 * SPOT) - as.integer(0.8 * SPOT))), 
+                          Value = value)
+
+priceChange %>% 
+  ggplot(aes(x=SPX, y=Value/1000000)) +
+  geom_line() +
+  ggtitle("Portfolio value as a function of % change in stock index") +
+  xlab("% change in stock index") +
+  ylab("Portfolio value (million $)") +
+  scale_y_continuous(labels = comma)
+```
+
+## Modeling SPX and VIX Index
+
+### Load data
+```{r}
+SPX_history <- read.csv("SPX_History.csv")
+VIX_history <- read.csv("VIX_History.csv")
+
+SPX <- subset(SPX_history, select = c(Date,Close))
+VIX <- subset(VIX_history, select = c(Date,Close))
+SPX$Date <- as.Date(SPX$Date, format="%m/%d/%Y")
+VIX$Date <- as.Date(VIX$Date, format="%m/%d/%Y")
+
+# Merge dataframes
+colnames(SPX)[colnames(SPX) == "Close"] <- "SPX"
+colnames(VIX)[colnames(VIX) == "Close"] <- "VIX"
+indexData <- merge(SPX, VIX, by = "Date")
+```
+
+### Compute Index Log Return
+```{r}
+n_idx <- nrow(indexData)
+indexData$SPX.Return[2:n_idx] <- log(indexData$SPX[2:n_idx] / indexData$SPX[1:(n_idx - 1)])
+indexData$VIX.Return[2:n_idx] <- log(indexData$VIX[2:n_idx] / indexData$VIX[1:(n_idx - 1)])
+
+# Get the most recent 1000 observations
+idx_DATE <- which(indexData$Date == DATE)
+returns <- indexData[(idx_DATE - 999):idx_DATE, c("Date", "SPX.Return", "VIX.Return")]
+```
+
+### Model Log Returns using GARCH
+```{r}
+# Univariate GARCH specification prior to fitting
+# Estimation of the parameters
+spec1 <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
+                    mean.model = list(armaOrder = c(0,0), include.mean = FALSE),
+                    distribution.model = "norm")
+
+spec2 <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
+                    mean.model = list(armaOrder = c(1,0), include.mean = TRUE),
+                    distribution.model = "norm")
+
+# Fitting GARCH model
+fitSPX <- ugarchfit(spec = spec1, data = returns[, "SPX.Return"])
+fitVIX <- ugarchfit(spec = spec2, data = returns[, "VIX.Return"])
+
+# GARCH coefficients
+coef(fitSPX)
+coef(fitVIX)
+```
+
+### Estimation of the DCC model
+```{r}
+multiSpec <- multispec(c(spec1, spec2))
+dccSpec <- dccspec(multiSpec, dccOrder = c(1,1), model = "DCC", distribution = "mvnorm")
+fitDcc <- dccfit(dccSpec,returns[, c("SPX.Return", "VIX.Return")])
+
+# DCC coefficients
+coef(fitDcc)
+```
+
+### Store Coefficients
+```{r}
+SPXcoef <- fitSPX@fit$coef 
+SPXsigma <- fitSPX@fit$sigma  
+SPXz <- fitSPX@fit$z          
+VIXcoef <- fitVIX@fit$coef   
+VIXsigma <- fitVIX@fit$sigma  
+VIXz <- fitVIX@fit$z          
+DCCcoef <- fitDcc@mfit$coef        
+DCCQ <- fitDcc@mfit$Q
+```
+
+### Conditional Mean, Variance, and Correlation for the next date
+equations
+```{r}
+# Conditional mean
+SPXmean <- 0
+VIXmean <- VIXcoef["mu"] + VIXcoef["ar1"] * returns[1000, "VIX.Return"]
+
+# Conditional variance
+SPXvariance <- SPXcoef["omega"] + SPXcoef["alpha1"] * returns[1000, "SPX.Return"]^2 + SPXcoef["beta1"] * SPXsigma[1000]^2
+VIXvariance <- VIXcoef["omega"] + VIXcoef["alpha1"] * returns[1000, "VIX.Return"]^2 + VIXcoef["beta1"] * VIXsigma[1000]^2
+
+# Conditional correlation
+rhobar <- (1/1000) * SPXz %*% VIXz
+q11 <- 1.0 + DCCcoef["[Joint]dcca1"] * (SPXz[1000]^2 - 1) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][1,1] - 1)
+q22 <- 1.0 + DCCcoef["[Joint]dcca1"] * (VIXz[1000]^2 - 1) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][2,2] - 1)
+q12 <- rhobar + DCCcoef["[Joint]dcca1"] * (SPXz[1000] * VIXz[1000] - rhobar) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][1,2] - rhobar)
+rho <- q12 / sqrt(q11 * q22)
+```
+
+### Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at Risk)
+```{r}
+delta <- portfolioGreeks$Delta
+vega <- portfolioGreeks$Vega
+
+# Portfolio expected change
+portExpectedChange <- vega * (indexData[idx_DATE, "VIX"] / 100) * VIXmean
+
+# Portfolio Variance
+portVariance <- delta^2 * indexData[idx_DATE, "SPX"]^2 * SPXvariance + vega^2 * (indexData[idx_DATE, "VIX"] / 100)^2 * VIXvariance + delta * vega * indexData[idx_DATE, "SPX"] * (indexData[idx_DATE, "VIX"] / 100) * rho * sqrt(SPXvariance * VIXvariance)
+
+# Portfolio standard deviation
+portSD <- sqrt(portVariance)
+
+# Portfolio delta-normal VaR
+DNVaR <- -1.645 * (portExpectedChange - portSD)
+DNVaR
+```
+
+## Filter Historical Simulation
+
+
+
+
+
+
