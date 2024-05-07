@@ -1922,9 +1922,9 @@ q11 &lt;- 1.0 + DCCcoef[&quot;[Joint]dcca1&quot;] * (SPXz[1000]^2 - 1) + DCCcoef
 q22 &lt;- 1.0 + DCCcoef[&quot;[Joint]dcca1&quot;] * (VIXz[1000]^2 - 1) + DCCcoef[&quot;[Joint]dccb1&quot;] * (DCCQ[[1000]][2,2] - 1)
 q12 &lt;- rhobar + DCCcoef[&quot;[Joint]dcca1&quot;] * (SPXz[1000] * VIXz[1000] - rhobar) + DCCcoef[&quot;[Joint]dccb1&quot;] * (DCCQ[[1000]][1,2] - rhobar)
 rho &lt;- q12 / sqrt(q11 * q22)
+rho &lt;- rho[1, 1]
 rho</code></pre>
-<pre><code>##            [,1]
-## [1,] -0.8646845</code></pre>
+<pre><code>## [1] -0.8646845</code></pre>
 </div>
 <div id="portfolio-expected-change-variance-and-delta-normal-var-value-at-risk" class="section level3">
 <h3>Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at
@@ -1944,9 +1944,9 @@ portSD &lt;- sqrt(portVariance)
 
 # Portfolio delta-normal VaR
 DNVaR &lt;- -1.645 * (portExpectedChange - portSD)
+names(DNVaR) &lt;- NULL
 DNVaR</code></pre>
-<pre><code>##           [,1]
-## [1,] 117038338</code></pre>
+<pre><code>## [1] 117038338</code></pre>
 </div>
 </div>
 <div id="filter-historical-simulation" class="section level2">

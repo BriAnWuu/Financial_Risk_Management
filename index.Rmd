@@ -328,6 +328,7 @@ portSD <- sqrt(portVariance)
 
 # Portfolio delta-normal VaR
 DNVaR <- -1.645 * (portExpectedChange - portSD)
+names(DNVaR) <- NULL
 DNVaR
 ```
 
