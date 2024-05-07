@@ -14,6 +14,8 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
 
 ## Introduction
+This project ...
+see source code at my [github repository](https://github.com/BriAnWuu/Financial_Risk_Management)
 
 ### Install Packages
 All R packages below are on CRAN, and can be installed with `install.packages`.
