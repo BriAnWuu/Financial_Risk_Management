@@ -1,5 +1,6 @@
 ---
 title: "Financial Risk Management"
+author: BRIAN WU
 output:
   html_document:
     toc: true
@@ -26,11 +27,11 @@ options(scipen = 999)
 ## Portfolio Overview
 
 ```{r include=FALSE}
-optionData <- read.xlsx("optiondata.xlsx", rows = c(5:25), detectDates = TRUE, sheet = "Option prices")
-yieldCurve <- read.xlsx("optiondata.xlsx", sheet = "zero-coupon yield curve")
+optionData <- read.xlsx("data/optiondata.xlsx", rows = c(5:25), detectDates = TRUE, sheet = "Option prices")
+yieldCurve <- read.xlsx("data/optiondata.xlsx", sheet = "zero-coupon yield curve")
 
 # Get SPX info
-currentInfo <- read.xlsx("optiondata.xlsx", rows = c(1:3), cols = c(1:2), colNames = FALSE, sheet = "Option prices")
+currentInfo <- read.xlsx("data/optiondata.xlsx", rows = c(1:3), cols = c(1:2), colNames = FALSE, sheet = "Option prices")
 
 DATE <- as.Date(currentInfo[1, 2], origin = "1899-12-30") # Evaluation date 2020/10/30
 SPOT <- currentInfo[2, 2] # Spot price of SPX on evaluation date
@@ -207,8 +208,8 @@ priceChange %>%
 ### Load Data
 ```{r}
 # Load data
-SPX_history <- read.csv("SPX_History.csv")
-VIX_history <- read.csv("VIX_History.csv")
+SPX_history <- read.csv("data/SPX_History.csv")
+VIX_history <- read.csv("data/VIX_History.csv")
 
 SPX <- subset(SPX_history, select = c(Date,Close))
 VIX <- subset(VIX_history, select = c(Date,Close))
