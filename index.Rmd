@@ -1,17 +1,23 @@
 ---
-title: "Financial Risk Management"
+title: Financial Risk Management
 author: BRIAN WU
 output:
   html_document:
+    theme: united
     toc: true
     toc_float: true
+    df_print: paged
 ---
 
 ```{r include=FALSE}
 knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
 
-```{r include=FALSE}
+## Introduction
+
+### Install Packages
+All R packages below are on CRAN, and can be installed with `install.packages`.
+```{r}
 library(xts)
 library(rmgarch)
 library(fOptions)
@@ -190,7 +196,7 @@ for (s in as.integer(0.8 * SPOT):as.integer(1.2 * SPOT)) {
 ```
 
 ### Data Visualization
-```{r}
+```{r echo=FALSE}
 priceChange <- data.frame(SPX = seq(-20, 20, 40 / (as.integer(1.2 * SPOT) - as.integer(0.8 * SPOT))), 
                           Value = value)
 
