@@ -23,10 +23,9 @@ library(scales)
 options(scipen = 999)
 ```
 
-## Greek Letter Risks of Portfolio
+## Portfolio Overview
 
-### Load Portfolio and Yield Curve
-```{r}
+```{r include=FALSE}
 optionData <- read.xlsx("optiondata.xlsx", rows = c(5:25), detectDates = TRUE, sheet = "Option prices")
 yieldCurve <- read.xlsx("optiondata.xlsx", sheet = "zero-coupon yield curve")
 
@@ -36,9 +35,27 @@ currentInfo <- read.xlsx("optiondata.xlsx", rows = c(1:3), cols = c(1:2), colNam
 DATE <- as.Date(currentInfo[1, 2], origin = "1899-12-30") # Evaluation date 2020/10/30
 SPOT <- currentInfo[2, 2] # Spot price of SPX on evaluation date
 q <- currentInfo[3, 2] # Dividend yield of SPX
+```
 
+### Portfolio
+```{r}
 optionData
 ```
+
+### Yield Curve
+```{r}
+yieldCurve
+```
+
+### Important Information
+```{r}
+DATE
+SPOT
+q
+```
+
+
+## Greek Letter Risks of Portfolio
 
 ### Time to Expiry
 ```{r}

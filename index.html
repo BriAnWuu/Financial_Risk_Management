@@ -1513,21 +1513,11 @@ div.tocify {
 </div>
 
 
-<div id="greek-letter-risks-of-portfolio" class="section level2">
-<h2>Greek Letter Risks of Portfolio</h2>
-<div id="load-portfolio-and-yield-curve" class="section level3">
-<h3>Load Portfolio and Yield Curve</h3>
-<pre class="r"><code>optionData &lt;- read.xlsx(&quot;optiondata.xlsx&quot;, rows = c(5:25), detectDates = TRUE, sheet = &quot;Option prices&quot;)
-yieldCurve &lt;- read.xlsx(&quot;optiondata.xlsx&quot;, sheet = &quot;zero-coupon yield curve&quot;)
-
-# Get SPX info
-currentInfo &lt;- read.xlsx(&quot;optiondata.xlsx&quot;, rows = c(1:3), cols = c(1:2), colNames = FALSE, sheet = &quot;Option prices&quot;)
-
-DATE &lt;- as.Date(currentInfo[1, 2], origin = &quot;1899-12-30&quot;) # Evaluation date 2020/10/30
-SPOT &lt;- currentInfo[2, 2] # Spot price of SPX on evaluation date
-q &lt;- currentInfo[3, 2] # Dividend yield of SPX
-
-optionData</code></pre>
+<div id="portfolio-overview" class="section level2">
+<h2>Portfolio Overview</h2>
+<div id="portfolio" class="section level3">
+<h3>Portfolio</h3>
+<pre class="r"><code>optionData</code></pre>
 <pre><code>##    Underlying Call.or.Put Strike.Price Expiration.Date Expiration.Time Quantity
 ## 1   SPX Index           C         3410      2021-01-15            Open     3000
 ## 2   SPX Index           C         3420      2021-01-15            Open     6000
@@ -1571,6 +1561,68 @@ optionData</code></pre>
 ## 19  38.90        100    -17505000                 NA    NA    NA    NA   NA
 ## 20  34.60        100    -10380000                 NA    NA    NA    NA   NA</code></pre>
 </div>
+<div id="yield-curve" class="section level3">
+<h3>Yield Curve</h3>
+<pre class="r"><code>yieldCurve</code></pre>
+<pre><code>##        date days     rate
+## 1  20201030    7 0.105068
+## 2  20201030   17 0.120535
+## 3  20201030   45 0.185891
+## 4  20201030   81 0.211408
+## 5  20201030  109 0.211791
+## 6  20201030  136 0.211005
+## 7  20201030  171 0.210354
+## 8  20201030  227 0.208477
+## 9  20201030  318 0.206832
+## 10 20201030  409 0.205918
+## 11 20201030  500 0.211792
+## 12 20201030  591 0.222098
+## 13 20201030  689 0.232312
+## 14 20201030  780 0.241273
+## 15 20201030  864 0.250825
+## 16 20201030  962 0.262954
+## 17 20201030 1053 0.275697
+## 18 20201030 1144 0.290039
+## 19 20201030 1235 0.306744
+## 20 20201030 1326 0.325673
+## 21 20201030 1417 0.346396
+## 22 20201030 1508 0.368283
+## 23 20201030 1599 0.391998
+## 24 20201030 1690 0.416701
+## 25 20201030 1781 0.442498
+## 26 20201030 1872 0.469228
+## 27 20201030 1963 0.496762
+## 28 20201030 2054 0.524320
+## 29 20201030 2145 0.552328
+## 30 20201030 2236 0.580730
+## 31 20201030 2327 0.609281
+## 32 20201030 2418 0.637205
+## 33 20201030 2509 0.664753
+## 34 20201030 2600 0.691964
+## 35 20201030 2691 0.718871
+## 36 20201030 2789 0.746764
+## 37 20201030 2880 0.771451
+## 38 20201030 2971 0.795399
+## 39 20201030 3062 0.818673
+## 40 20201030 3153 0.840750
+## 41 20201030 3244 0.861872
+## 42 20201030 3335 0.882117
+## 43 20201030 3426 0.901956
+## 44 20201030 3517 0.921031
+## 45 20201030 3608 0.939398</code></pre>
+</div>
+<div id="important-information" class="section level3">
+<h3>Important Information</h3>
+<pre class="r"><code>DATE</code></pre>
+<pre><code>## [1] &quot;2020-10-30&quot;</code></pre>
+<pre class="r"><code>SPOT</code></pre>
+<pre><code>## [1] 3269.96</code></pre>
+<pre class="r"><code>q</code></pre>
+<pre><code>## [1] 0.0163917</code></pre>
+</div>
+</div>
+<div id="greek-letter-risks-of-portfolio" class="section level2">
+<h2>Greek Letter Risks of Portfolio</h2>
 <div id="time-to-expiry" class="section level3">
 <h3>Time to Expiry</h3>
 <pre class="r"><code>n &lt;- nrow(optionData) # Number of option positions
