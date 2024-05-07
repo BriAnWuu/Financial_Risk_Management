@@ -49,9 +49,9 @@ yieldCurve
 
 ### Important Information
 ```{r}
-DATE
-SPOT
-q
+DATE # Evaluation date 2020/10/30
+SPOT # Spot price of SPX on evaluation date
+q # Dividend yield of SPX
 ```
 
 
@@ -128,8 +128,8 @@ optionData$Implied.volatility
 ```
 
 ### Compute d1 and d2
-equation
-R vectorization soooo gooood
+{equation}
+R vectorization convenient
 ```{r}
 X <- optionData$Strike.Price
 r <- optionData$Rate
@@ -141,7 +141,7 @@ optionData$d2 <- optionData$d1 - sig * sqrt(t)
 ```
 
 ### Greeks
-equations
+{equations}
 ```{r}
 X <- optionData$Strike.Price
 multiplier <- optionData$Multiplier
@@ -155,10 +155,11 @@ optionData$Delta <- multiplier * exp(-q * t) * pnorm(d1)
 optionData$Gamma <- multiplier * exp(-q * t) * dnorm(d1) / (SPOT * sig * sqrt(t))
 optionData$Theta <- multiplier * {-0.5 * SPOT * sig * exp(-q * t) * dnorm(d1) / sqrt(t) - r * X * exp(-r * t) * pnorm(d2) + q * SPOT * exp(-q * t) * pnorm(d1)}
 optionData$Vega  <- multiplier * SPOT * exp(-q * t) * sqrt(t) * dnorm(d1)
-optionData
+optionData[, c("Strike.Price", "Quantity", "Implied.volatility", "Delta", "Gamma", "Theta", "Vega", "time_to_expiry_years")]
 ```
 
 ### Portfolio Greeks
+linearity of greeks
 ```{r}
 portfolioGreeks <- data.frame(row.names = "Portfolio",
                               Delta = sum(optionData$Delta * optionData$Quantity),
@@ -201,10 +202,11 @@ priceChange %>%
   scale_y_continuous(labels = comma)
 ```
 
-## Modeling SPX and VIX Index
+## Indices Overview
 
-### Load data
+### Load Data
 ```{r}
+# Load data
 SPX_history <- read.csv("SPX_History.csv")
 VIX_history <- read.csv("VIX_History.csv")
 
@@ -219,6 +221,19 @@ colnames(VIX)[colnames(VIX) == "Close"] <- "VIX"
 indexData <- merge(SPX, VIX, by = "Date")
 ```
 
+### SPX Index
+```{r}
+# visualization
+```
+
+### VIX Index
+```{r}
+# visualization
+```
+
+
+## Modeling SPX and VIX Index
+
 ### Compute Index Log Return
 ```{r}
 n_idx <- nrow(indexData)
@@ -231,6 +246,7 @@ returns <- indexData[(idx_DATE - 999):idx_DATE, c("Date", "SPX.Return", "VIX.Ret
 ```
 
 ### Model Log Returns using GARCH
+{equation}
 ```{r}
 # Univariate GARCH specification prior to fitting
 # Estimation of the parameters
@@ -252,6 +268,7 @@ coef(fitVIX)
 ```
 
 ### Estimation of the DCC model
+{equation}
 ```{r}
 multiSpec <- multispec(c(spec1, spec2))
 dccSpec <- dccspec(multiSpec, dccOrder = c(1,1), model = "DCC", distribution = "mvnorm")
@@ -263,18 +280,18 @@ coef(fitDcc)
 
 ### Store Coefficients
 ```{r}
-SPXcoef <- fitSPX@fit$coef 
-SPXsigma <- fitSPX@fit$sigma  
-SPXz <- fitSPX@fit$z          
-VIXcoef <- fitVIX@fit$coef   
-VIXsigma <- fitVIX@fit$sigma  
-VIXz <- fitVIX@fit$z          
-DCCcoef <- fitDcc@mfit$coef        
+SPXcoef <- fitSPX@fit$coef
+SPXsigma <- fitSPX@fit$sigma
+SPXz <- fitSPX@fit$z
+VIXcoef <- fitVIX@fit$coef
+VIXsigma <- fitVIX@fit$sigma
+VIXz <- fitVIX@fit$z   
+DCCcoef <- fitDcc@mfit$coef
 DCCQ <- fitDcc@mfit$Q
 ```
 
 ### Conditional Mean, Variance, and Correlation for the next date
-equations
+{equations}
 ```{r}
 # Conditional mean
 SPXmean <- 0
@@ -290,9 +307,12 @@ q11 <- 1.0 + DCCcoef["[Joint]dcca1"] * (SPXz[1000]^2 - 1) + DCCcoef["[Joint]dccb
 q22 <- 1.0 + DCCcoef["[Joint]dcca1"] * (VIXz[1000]^2 - 1) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][2,2] - 1)
 q12 <- rhobar + DCCcoef["[Joint]dcca1"] * (SPXz[1000] * VIXz[1000] - rhobar) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][1,2] - rhobar)
 rho <- q12 / sqrt(q11 * q22)
+rho <- rho[1, 1]
+rho
 ```
 
 ### Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at Risk)
+{equation}
 ```{r}
 delta <- portfolioGreeks$Delta
 vega <- portfolioGreeks$Vega
