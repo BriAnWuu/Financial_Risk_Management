@@ -372,6 +372,7 @@ DNVaR
 
 ## Filtered Historical Simulation
 {equation}
+accounts for fat tail, etc.
 
 ## Filtered Historical Simulation VaR for 1-Day Holding Period
 
@@ -394,6 +395,62 @@ Using parameter estimates from DCC model in previous section [DCC Estimates][Con
 ```{r}
 SPX_simReturn <- SPXmean + sqrt(SPXvariance) * SPXz # Vector of 1000 simulated returns
 VIX_simReturn <- VIXmean + sqrt(VIXvariance) * VIXz # Vector of 1000 simulated returns
+```
+
+### Returns Distribution
+```{r echo=FALSE}
+# Returns distribution of SPX
+
+# Create intervals (bins) from -15% to 15%
+bins <- seq(-15.5, 15.5, 1)
+bins <- c(-100, bins, 100) # Set upper and lower bounds
+
+# Create interval (bin) labels
+bin_label <- seq(-15, 15)
+bin_label <- c("< -15", bin_label, "> 15") # Set upper and lower bounds
+bin_label <- paste0(bin_label, "%") # Add % to labels
+
+# Cut returns into intervals (data binning)
+SPX_simReturn_Cut <- cut(SPX_simReturn * 100, breaks = bins, labels = bin_label)
+
+# Create data frame
+df <- data.frame(Return = SPX_simReturn_Cut)
+
+# Plot returns distribution
+df %>% 
+  ggplot(aes(x = Return, y = ..prop.., group = 1)) + 
+  geom_bar(fill="navyblue") +
+  ggtitle("Return Distribution of SPX (1-Day Horizon)") +
+  xlab("Return") +
+  ylab("Frequency")
+```
+
+```{r echo=FALSE}
+# Returns distribution of VIX
+
+# Create intervals (bins) from -15% to 15%
+bins <- seq(-15.5, 15.5, 1)
+bins <- c(-100, bins, 100) # Set upper and lower bounds
+
+# Create interval (bin) labels
+bin_label <- seq(-15, 15)
+bin_label <- c("< -15", bin_label, "> 15") # Set upper and lower bounds
+bin_label <- paste0(bin_label, "%") # Add % to labels
+
+# Cut returns into intervals (data binning)
+VIX_simReturn_Cut <- cut(VIX_simReturn * 100, breaks = bins, labels = bin_label)
+
+# Create data frame
+df <- data.frame(Return = VIX_simReturn_Cut)
+
+# Plot returns distribution
+df %>% 
+  ggplot(aes(x = Return, y = ..prop.., group = 1)) + 
+  geom_bar(fill="navyblue") +
+  ggtitle("Return Distribution of VIX (1-Day Horizon)") +
+  xlab("Return") +
+  ylab("Frequency") +
+  theme(axis.text.x = element_text(angle = 90))
 ```
 
 ### FHS Value at Risk
