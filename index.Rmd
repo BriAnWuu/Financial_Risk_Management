@@ -56,7 +56,7 @@ optionData
 yieldCurve
 ```
 
-### Important Information
+### Important Information (Parameters that will be used throughout this Project)
 ```{r}
 DATE # Evaluation date 2020/10/30
 SPOT # Spot price of SPX on evaluation date
@@ -153,17 +153,17 @@ optionData$d2 <- optionData$d1 - sig * sqrt(t)
 {equations}
 ```{r}
 X <- optionData$Strike.Price
-multiplier <- optionData$Multiplier
+Multiplier <- optionData$Multiplier
 t <- optionData$time_to_expiry_years
 r <- optionData$Rate
 sig <- optionData$Implied.volatility
 d1 <- optionData$d1
 d2 <- optionData$d2
 
-optionData$Delta <- multiplier * exp(-q * t) * pnorm(d1)
-optionData$Gamma <- multiplier * exp(-q * t) * dnorm(d1) / (SPOT * sig * sqrt(t))
-optionData$Theta <- multiplier * {-0.5 * SPOT * sig * exp(-q * t) * dnorm(d1) / sqrt(t) - r * X * exp(-r * t) * pnorm(d2) + q * SPOT * exp(-q * t) * pnorm(d1)}
-optionData$Vega  <- multiplier * SPOT * exp(-q * t) * sqrt(t) * dnorm(d1)
+optionData$Delta <- Multiplier * exp(-q * t) * pnorm(d1)
+optionData$Gamma <- Multiplier * exp(-q * t) * dnorm(d1) / (SPOT * sig * sqrt(t))
+optionData$Theta <- Multiplier * {-0.5 * SPOT * sig * exp(-q * t) * dnorm(d1) / sqrt(t) - r * X * exp(-r * t) * pnorm(d2) + q * SPOT * exp(-q * t) * pnorm(d1)}
+optionData$Vega  <- Multiplier * SPOT * exp(-q * t) * sqrt(t) * dnorm(d1)
 optionData[, c("Strike.Price", "Quantity", "Implied.volatility", "Delta", "Gamma", "Theta", "Vega", "time_to_expiry_years")]
 ```
 
@@ -180,21 +180,25 @@ portfolioGreeks
 
 ### Portfolio value as SPX value changes
 ```{r}
+# Parameters
+X <- optionData$Strike.Price
+Quantity <- optionData$Quantity
+Multiplier <- optionData$Multiplier
+sig <- optionData$Implied.volatility
+t <- optionData$time_to_expiry_years
+r <- optionData$Rate
+
 # Calculate portfolio value for SPX values ranging from -20% to +20% of spot price
 value <- c()
 for (s in as.integer(0.8 * SPOT):as.integer(1.2 * SPOT)) {
   
-  # Calculate value for each option position
-  value_part <- rep(0, n)
-  for (i in 1:n) {
-    value_part[i] <- optionData[i, "Quantity"] * optionData[i, "Multiplier"] * 
-      GBSOption(TypeFlag = "c", S = s, X = optionData[i, "Strike.Price"], Time = optionData[i, "time_to_expiry_years"], r = optionData[i, "Rate"], b = optionData[i, "Rate"] - q, sigma = optionData[i, "Implied.volatility"])@price
-  }
+  # Calculate value for each option position as spot price changes
+  # Since parameters are all vectorized, value_part will also be a vector
+  value_part <- Multiplier * Quantity * GBSOption(TypeFlag = "c", S = s, X = X, Time = t, r = r, b = r - q, sigma = sig)@price
   
-  # Append value
+  # Append portfolio value
   value <- c(value, sum(value_part))
 }
-
 ```
 
 ### Data Visualization
@@ -228,16 +232,29 @@ VIX$Date <- as.Date(VIX$Date, format="%m/%d/%Y")
 colnames(SPX)[colnames(SPX) == "Close"] <- "SPX"
 colnames(VIX)[colnames(VIX) == "Close"] <- "VIX"
 indexData <- merge(SPX, VIX, by = "Date")
+indexData
 ```
 
 ### SPX Index
-```{r}
-# visualization
+```{r echo=FALSE, out.width="100%"}
+SPX %>%
+  ggplot(aes(x=Date, y=SPX)) +
+  geom_line() +
+  ggtitle("Historical SPX Index Value") +
+  xlab("Date") +
+  ylab("SPX Value") +
+  scale_y_continuous(labels = comma)
 ```
 
 ### VIX Index
-```{r}
-# visualization
+```{r echo=FALSE, out.width="100%"}
+VIX %>%
+  ggplot(aes(x=Date, y=VIX)) +
+  geom_line() +
+  ggtitle("Historical VIX Index Value") +
+  xlab("Date") +
+  ylab("VIX Value") +
+  scale_y_continuous(labels = comma)
 ```
 
 
@@ -306,6 +323,7 @@ DCCQ <- fitDcc@mfit$Q
 SPXmean <- 0
 VIXmean <- VIXcoef["mu"] + VIXcoef["ar1"] * returns[1000, "VIX.Return"]
 
+
 # Conditional variance
 SPXvariance <- SPXcoef["omega"] + SPXcoef["alpha1"] * returns[1000, "SPX.Return"]^2 + SPXcoef["beta1"] * SPXsigma[1000]^2
 VIXvariance <- VIXcoef["omega"] + VIXcoef["alpha1"] * returns[1000, "VIX.Return"]^2 + VIXcoef["beta1"] * VIXsigma[1000]^2
@@ -316,7 +334,18 @@ q11 <- 1.0 + DCCcoef["[Joint]dcca1"] * (SPXz[1000]^2 - 1) + DCCcoef["[Joint]dccb
 q22 <- 1.0 + DCCcoef["[Joint]dcca1"] * (VIXz[1000]^2 - 1) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][2,2] - 1)
 q12 <- rhobar + DCCcoef["[Joint]dcca1"] * (SPXz[1000] * VIXz[1000] - rhobar) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][1,2] - rhobar)
 rho <- q12 / sqrt(q11 * q22)
+
+# Cleaner output
+names(VIXmean) <- NULL
+names(SPXvariance) <- NULL
+names(VIXvariance) <- NULL
 rho <- rho[1, 1]
+
+# Output
+SPXmean
+VIXmean
+SPXvariance
+VIXvariance
 rho
 ```
 
@@ -341,7 +370,68 @@ names(DNVaR) <- NULL
 DNVaR
 ```
 
-## Filter Historical Simulation
+## Filtered Historical Simulation
+{equation}
+
+## Filtered Historical Simulation VaR for 1-Day Holding Period
+
+### Portfolio Value on Evaluation Date
+```{r}
+X <- optionData$Strike.Price
+Quantity <- optionData$Quantity
+Multiplier <- optionData$Multiplier
+sig <- optionData$Implied.volatility
+t <- optionData$time_to_expiry_years
+r <- optionData$Rate
+
+# Portfolio value on 10/30/2020
+initPortValue <- sum(Multiplier * Quantity * GBSOption(TypeFlag = "c", S = SPOT, X = X, Time = t, r = r, b = r - q, sigma = sig)@price)
+initPortValue
+```
+
+### Simulated Returns
+Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
+```{r}
+SPX_simReturn <- SPXmean + sqrt(SPXvariance) * SPXz # Vector of 1000 simulated returns
+VIX_simReturn <- VIXmean + sqrt(VIXvariance) * VIXz # Vector of 1000 simulated returns
+```
+
+### FHS Value at Risk
+```{r}
+newTau <- t - 3/365
+newPortValue <- rep(0, 1000)
+PL <- rep(0, 1000)
+
+for (i in 1:1000) {
+  
+  # Calculate new SPX spot value using simulated return of SPX
+  newSpot <- SPOT * exp(SPX_simReturn[i])
+  
+  # Calculate new volatility using simulated return of VIX
+  newSigma <- sig * exp(VIX_simReturn[i])
+  
+  # Store new portfolio value
+  newPortValue[i] <- sum(Multiplier * Quantity * GBSOption(TypeFlag = "c", S = newSpot, X = X, Time = newTau, r = r, b = r - q, sigma = newSigma)@price)
+  
+  # Store profit and loss
+  PL[i] <- newPortValue[i] - initPortValue
+}
+
+FHSVaR <- -quantile(PL, 0.05)
+FHSVaR
+```
+
+
+## Filtered Historical Simulation VaR for 1-Month Holding Period
+Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
+```{r}
+X <- optionData$Strike.Price
+Quantity <- optionData$Quantity
+Multiplier <- optionData$Multiplier
+sig <- optionData$Implied.volatility
+t <- optionData$time_to_expiry_years
+r <- optionData$Rate
+```
 
 
 
