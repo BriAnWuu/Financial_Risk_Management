@@ -390,7 +390,7 @@ initPortValue <- sum(Multiplier * Quantity * GBSOption(TypeFlag = "c", S = SPOT,
 initPortValue
 ```
 
-### Simulated Returns
+### Simulate Returns
 Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
 ```{r}
 SPX_simReturn <- SPXmean + sqrt(SPXvariance) * SPXz # Vector of 1000 simulated returns
@@ -413,11 +413,8 @@ bin_label <- paste0(bin_label, "%") # Add % to labels
 # Cut returns into intervals (data binning)
 SPX_simReturn_Cut <- cut(SPX_simReturn * 100, breaks = bins, labels = bin_label)
 
-# Create data frame
-df <- data.frame(Return = SPX_simReturn_Cut)
-
 # Plot returns distribution
-df %>% 
+data.frame(Return = SPX_simReturn_Cut) %>% # Make data frame for ggplot 
   ggplot(aes(x = Return, y = ..prop.., group = 1)) + 
   geom_bar(fill="navyblue") +
   ggtitle("Return Distribution of SPX (1-Day Horizon)") +
@@ -440,11 +437,8 @@ bin_label <- paste0(bin_label, "%") # Add % to labels
 # Cut returns into intervals (data binning)
 VIX_simReturn_Cut <- cut(VIX_simReturn * 100, breaks = bins, labels = bin_label)
 
-# Create data frame
-df <- data.frame(Return = VIX_simReturn_Cut)
-
 # Plot returns distribution
-df %>% 
+data.frame(Return = VIX_simReturn_Cut) %>% # Make data frame for ggplot 
   ggplot(aes(x = Return, y = ..prop.., group = 1)) + 
   geom_bar(fill="navyblue") +
   ggtitle("Return Distribution of VIX (1-Day Horizon)") +
@@ -453,7 +447,7 @@ df %>%
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-### FHS Value at Risk
+### FHS Value at Risk for 1-Day Holding Period
 ```{r}
 newTau <- t - 3/365
 newPortValue <- rep(0, 1000)
@@ -474,20 +468,17 @@ for (i in 1:1000) {
   PL[i] <- newPortValue[i] - initPortValue
 }
 
-FHSVaR <- -quantile(PL, 0.05)
-FHSVaR
+FHSVaR_1_day <- -quantile(PL, 0.05)
+FHSVaR_1_day
 ```
 
 
 ## Filtered Historical Simulation VaR for 1-Month Holding Period
+
+### Simulate Returns
 Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
 ```{r}
-X <- optionData$Strike.Price
-Quantity <- optionData$Quantity
-Multiplier <- optionData$Multiplier
-sig <- optionData$Implied.volatility
-t <- optionData$time_to_expiry_years
-r <- optionData$Rate
+
 ```
 
 
