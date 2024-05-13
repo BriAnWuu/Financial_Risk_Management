@@ -13,7 +13,7 @@ output:
 knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
 
-## Introduction
+## **Introduction**
 This project ...
 see source code at my [github repository](https://github.com/BriAnWuu/Financial_Risk_Management)
 
@@ -32,7 +32,7 @@ library(scales)
 options(scipen = 999)
 ```
 
-## Portfolio Overview
+## **Portfolio Overview**
 
 ```{r include=FALSE}
 optionData <- read.xlsx("data/optiondata.xlsx", rows = c(5:25), detectDates = TRUE, sheet = "Option prices")
@@ -64,7 +64,7 @@ q # Dividend yield of SPX
 ```
 
 
-## Greek Letter Risks of Portfolio
+## **Greek Letter Risks of Portfolio**
 
 ### Time to Expiry
 ```{r}
@@ -175,7 +175,7 @@ portfolioGreeks <- data.frame(row.names = "Portfolio",
                               Gamma = sum(optionData$Gamma * optionData$Quantity),
                               Theta = sum(optionData$Theta * optionData$Quantity),
                               Vega = sum(optionData$Vega * optionData$Quantity))
-portfolioGreeks
+format(portfolioGreeks, big.mark = ",")
 ```
 
 ### Portfolio value as SPX value changes
@@ -215,7 +215,7 @@ priceChange %>%
   scale_y_continuous(labels = comma)
 ```
 
-## Indices Overview
+## **Indices Overview**
 
 ### Load Data
 ```{r}
@@ -258,9 +258,10 @@ VIX %>%
 ```
 
 
-## Modeling SPX and VIX Index
+## **Modeling SPX and VIX Index**
 
 ### Compute Index Log Return
+Log Return's nice property
 ```{r}
 n_idx <- nrow(indexData)
 indexData$SPX.Return[2:n_idx] <- log(indexData$SPX[2:n_idx] / indexData$SPX[1:(n_idx - 1)])
@@ -269,6 +270,7 @@ indexData$VIX.Return[2:n_idx] <- log(indexData$VIX[2:n_idx] / indexData$VIX[1:(n
 # Get the most recent 1000 observations
 idx_DATE <- which(indexData$Date == DATE)
 returns <- indexData[(idx_DATE - 999):idx_DATE, c("Date", "SPX.Return", "VIX.Return")]
+returns
 ```
 
 ### Model Log Returns using GARCH
@@ -285,8 +287,8 @@ spec2 <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1))
                     distribution.model = "norm")
 
 # Fitting GARCH model
-fitSPX <- ugarchfit(spec = spec1, data = returns[, "SPX.Return"])
-fitVIX <- ugarchfit(spec = spec2, data = returns[, "VIX.Return"])
+fitSPX <- ugarchfit(spec = spec1, data = returns$SPX.Return)
+fitVIX <- ugarchfit(spec = spec2, data = returns$VIX.Return)
 
 # GARCH coefficients
 coef(fitSPX)
@@ -366,15 +368,14 @@ portSD <- sqrt(portVariance)
 
 # Portfolio delta-normal VaR
 DNVaR <- -1.645 * (portExpectedChange - portSD)
-names(DNVaR) <- NULL
-DNVaR
+format(DNVaR, big.mark = ",")
 ```
 
-## Filtered Historical Simulation
+## **Filtered Historical Simulation**
 {equation}
 accounts for fat tail, etc.
 
-## Filtered Historical Simulation VaR for 1-Day Holding Period
+## **Filtered Historical Simulation VaR for 1-Day Holding Period**
 
 ### Portfolio Value on Evaluation Date
 ```{r}
@@ -387,7 +388,7 @@ r <- optionData$Rate
 
 # Portfolio value on 10/30/2020
 initPortValue <- sum(Multiplier * Quantity * GBSOption(TypeFlag = "c", S = SPOT, X = X, Time = t, r = r, b = r - q, sigma = sig)@price)
-initPortValue
+format(initPortValue, big.mark = ",")
 ```
 
 ### Simulate Returns
@@ -398,7 +399,7 @@ VIX_simReturn <- VIXmean + sqrt(VIXvariance) * VIXz # Vector of 1000 simulated r
 ```
 
 ### Returns Distribution
-```{r echo=FALSE}
+```{r}
 # Returns distribution of SPX
 
 # Create intervals (bins) from -15% to 15%
@@ -422,7 +423,7 @@ data.frame(Return = SPX_simReturn_Cut) %>% # Make data frame for ggplot
   ylab("Frequency")
 ```
 
-```{r echo=FALSE}
+```{r}
 # Returns distribution of VIX
 
 # Create intervals (bins) from -15% to 15%
@@ -469,20 +470,143 @@ for (i in 1:1000) {
 }
 
 FHSVaR_1_day <- -quantile(PL, 0.05)
-FHSVaR_1_day
+format(FHSVaR_1_day, big.mark = ",")
 ```
 
 
-## Filtered Historical Simulation VaR for 1-Month Holding Period
+## **Filtered Historical Simulation VaR for 1-Month Holding Period**
 
-### Simulate Returns
+### Simulate Returns for 21 Days (1 Month)
 Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
 ```{r}
+# Days
+n_day <- 21
 
+# Simulate variances
+simVariance <- data.frame(SPX = rep(0, n_day),
+                          VIX = rep(0, n_day))
+# Simulate means
+simMean <- data.frame(SPX = rep(0, n_day),
+                      VIX = rep(0, n_day))
+# 1,000 Z's (shocks)
+Z <- data.frame(SPX = SPXz, 
+                VIX = VIXz)
+# Simulate returns
+simReturn <- data.frame(SPX = rep(0, n_day),
+                        VIX = rep(0, n_day))
+
+# Set variances and means for Evaluation Date + 1
+simVariance[1, "SPX"] <- SPXvariance
+simVariance[1, "VIX"] <- VIXvariance
+simMean[1, "SPX"] <- SPXmean
+simMean[1, "VIX"] <- VIXmean
+```
+
+### Simulation
+```{r}
+set.seed(123)
+
+# Vector used to hold 21-day returns
+SPX_simReturn_21 <- rep(0, 5000)
+VIX_simReturn_21 <- rep(0, 5000)
+
+newTau <- t - 31/365
+newPortValue <- rep(0, 5000)
+PL <- rep(0, 5000)
+
+for (i in 1:5000) {
+  # Draw a sample of 21 shocks to use for 21 days
+  shock <- Z[sample(1:1000, size = n_day, replace = TRUE), ]
+  
+  # Calculate simulated returns for Evaluation Date + 1
+  simReturn[1, ] <- simMean[1, ] + sqrt(simVariance[1, ]) * shock[1, ]
+  
+  for (j in 2:n_day) {
+    # Update VIX mean return
+    simMean[j, "VIX"] <- VIXcoef["mu"] + VIXcoef["ar1"] * simReturn[j - 1, "VIX"]
+    
+    # Update variances
+    simVariance[j, "SPX"] <- SPXcoef["omega"] + SPXcoef["alpha1"] * simReturn[j - 1, "SPX"]^2 + SPXcoef["beta1"] * simVariance[j - 1, "SPX"]
+    simVariance[j, "VIX"] <- VIXcoef["omega"] + VIXcoef["alpha1"] * simReturn[j - 1, "VIX"]^2 + VIXcoef["beta1"] * simVariance[j - 1, "VIX"]
+    
+    # Calculate returns
+    simReturn[j, ] <- simMean[j, ] + sqrt(simVariance[j, ]) * shock[j, ]
+  }
+  
+  # Store simulated 21-day return
+  SPX_simReturn_21[i] <- sum(simReturn$SPX)
+  VIX_simReturn_21[i] <- sum(simReturn$VIX)
+  
+  # Simulate SPX and VIX values for 21 days
+  newSpot <- SPOT * exp(SPX_simReturn_21[i])
+  newSigma <- sig * exp(VIX_simReturn_21[i])
+  
+  # Calculate simulated portfolio value
+  newPortValue[i] <- sum(Multiplier * Quantity * GBSOption(TypeFlag = "c", S = newSpot, X = X, Time = newTau, r = r, b = r - q, sigma = newSigma)@price)
+  
+  # Store profit and loss
+  PL[i] <- newPortValue[i] - initPortValue
+}
+
+print(paste0("Number of Simulations: ", i))
+```
+
+### Returns Distribution
+```{r}
+# Returns distribution of SPX
+
+# Create intervals (bins) from -15% to 15%
+bins <- seq(-15.5, 15.5, 1)
+bins <- c(-100, bins, 100) # Set upper and lower bounds
+
+# Create interval (bin) labels
+bin_label <- seq(-15, 15)
+bin_label <- c("< -15", bin_label, "> 15") # Set upper and lower bounds
+bin_label <- paste0(bin_label, "%") # Add % to labels
+
+# Cut returns into intervals (data binning)
+SPX_simReturn_21_Cut <- cut(SPX_simReturn_21 * 100, breaks = bins, labels = bin_label)
+
+# Plot returns distribution
+data.frame(Return = SPX_simReturn_21_Cut) %>% # Make data frame for ggplot 
+  ggplot(aes(x = Return, y = ..prop.., group = 1)) + 
+  geom_bar(fill="navyblue") +
+  ggtitle("Return Distribution of SPX (21-Day Horizon)") +
+  xlab("Return") +
+  ylab("Frequency") +
+  theme(axis.text.x = element_text(angle = 90))
 ```
 
 
+```{r}
+# Returns distribution of VIX
 
+# Create intervals (bins) from -100% to 100%
+increment <- 10
+bins <- seq(-(100 + increment/2), 100 + increment/2, increment)
+bins <- c(-500, bins, 500) # Set upper and lower bounds
 
+# Create interval (bin) labels
+bin_label <- seq(-100, 100, increment)
+bin_label <- c("< -100", bin_label, "> 100") # Set upper and lower bounds
+bin_label <- paste0(bin_label, "%") # Add % to labels
 
+# Cut returns into intervals (data binning)
+VIX_simReturn_21_Cut <- cut(VIX_simReturn_21 * 100, breaks = bins, labels = bin_label)
+
+# Plot returns distribution
+data.frame(Return = VIX_simReturn_21_Cut) %>% # Make data frame for ggplot 
+  ggplot(aes(x = Return, y = ..prop.., group = 1)) + 
+  geom_bar(fill="navyblue") +
+  ggtitle("Return Distribution of VIX (21-Day Horizon)") +
+  xlab("Return") +
+  ylab("Frequency") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+### FHS Value at Risk for 1-Month Holding Period
+```{r}
+FHSVaR_21_day <- -quantile(PL, 0.05)
+format(FHSVaR_21_day, big.mark = ",")
+```
 
