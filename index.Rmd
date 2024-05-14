@@ -10,12 +10,27 @@ output:
 ---
 
 ```{r include=FALSE}
-knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE) # Suppress warning and message
 ```
 
 ## **Introduction**
-This project ... still testing
-see source code at my [github repository](https://github.com/BriAnWuu/Financial_Risk_Management)
+This project aims to provide a comprehensive analysis of the quantitative risks inherent in a portfolio of options on the S&P 500 index. Leveraging the versatile capabilities of the R programming language, we perform a series of tasks to quantify and mitigate risks associated with the portfolio.
+
+Project Objectives:
+
+1. **Calculation of Greek Letter Risks:** We begin by calculating the Greek letter risks of the portfolio, including delta, gamma, theta, vega, and rho. These measures provide insights into the portfolio's sensitivity to changes in underlying factors such as stock price, volatility, time decay, and interest rates.
+
+2. **Visualization of Portfolio Value:** We visualize the portfolio's value as the index value of the S&P 500 changes, allowing for a dynamic understanding of how market movements impact the portfolio's performance.
+
+3. **Modeling Market Volatility:** Utilizing **GARCH** (Generalized Autoregressive Conditional Heteroskedasticity) and **DCC** (Dynamic Conditional Correlation) models, we analyze and model the changes in the S&P 500 index and the VIX index. These models help capture the time-varying volatility and correlation dynamics of the market.
+
+4. **Delta-Normal Value at Risk (VaR) Calculation:** We calculate the delta-normal VaR, a widely used risk measure that estimates the maximum potential loss of the portfolio at a specified confidence level over a given time horizon, assuming normal market conditions.
+
+5. **Filtered Historical Simulation VaR (1-Day Holding Period):** Employing filtered historical simulation, we estimate the VaR of the portfolio for a one-day holding period. This approach incorporates real market data and accounts for the impact of historical events on portfolio performance.
+
+6. **Filtered Historical Simulation VaR (1-Month Holding Period):** Extending the analysis, we calculate the filtered historical simulation VaR for a one-month holding period, providing insights into the longer-term risk exposure of the portfolio.
+
+See more details at my [github repository](https://github.com/BriAnWuu/Financial_Risk_Management).
 
 ### Install Packages
 All R packages below are on CRAN, and can be installed with `install.packages`.
@@ -56,7 +71,8 @@ optionData
 yieldCurve
 ```
 
-### Important Information (Parameters that will be used throughout this Project)
+### Important Information 
+Parameters that will be used throughout this Project
 ```{r}
 DATE # Evaluation date 2020/10/30
 SPOT # Spot price of SPX on evaluation date
