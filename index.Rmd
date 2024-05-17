@@ -120,13 +120,15 @@ optionData$time_to_expiry_days
 ### Interest Rates 
 Linear Interpolation of interest rate:  
 $$R_{n} = R_{1} + \frac{R_{2} - R_{1}}{t_{2} - t_{1}} * (t_{n} - t_{1})$$  
-where:  
-    $R_{n}$ = unknown rate  
-    $R_{1}$ = rate for the shorter designated maturity (nearest to the reset date)  
-    $R_{2}$ = rate for the longer designated maturity (nearest to the reset date)  
-    $t_{n}$ = number of calendar days to expiry of option  
-    $t_{1}$ = number of calendar days to the shorter designated maturity  
-    $t_{2}$ = number of calendar days to the longer designated maturity  
+where:
+\begin{align*}
+& R_{n} = \text{unknown rate}  \\
+& R_{1} = \text{rate for the shorter designated maturity (nearest to the reset date)}  \\
+& R_{2} = \text{rate for the longer designated maturity (nearest to the reset date)}  \\
+& t_{n} = \text{number of calendar days to expiry of option}  \\
+& t_{1} = \text{number of calendar days to the shorter designated maturity}  \\
+& t_{2} = \text{number of calendar days to the longer designated maturity}  
+\end{align*}
 ```{r}
 rates <- rep(0, n)
 
@@ -170,16 +172,18 @@ optionData$Implied.volatility
 Price of call option C is given as the following formula:
 $$C = SN(d_{1}) - Ke^{-rt}N(d_{2})$$
 where:
-$$d_{1} = \frac{\ln(\frac{S}{K}) + (r - q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt t} $$
-$$d_{2} = d_{1} - \sigma\sqrt t $$
-where:  
-    $S$ = Spot price of underlying asset  
-    $K$ = Strike price  
-    $r$ = Interest rate  
-    $q$ = Dividend yield of underlying asset  
-    $\sigma$ = Volatility  
-    $t$ = Time to maturity  
-    $N()$ = Normal distribution  
+$$d_{1} = \frac{\ln(\frac{S}{K}) + (r - q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt{t}}$$
+$$d_{2} = d_{1} - \sigma\sqrt{t}$$
+where:
+\begin{align*}
+& S = \text{Spot price of underlying asset}  \\
+& K = \text{Strike price}  \\
+& r = \text{Interest rate}  \\
+& q = \text{Dividend yield of underlying asset}  \\
+& \sigma = \text{Volatility}  \\
+& t = \text{Time to maturity}  \\
+& N() = \text{Normal distribution}  
+\end{align*}
 ```{r}
 # Utilize R vectorization to make calculations cleaner
 X <- optionData$Strike.Price
@@ -192,7 +196,31 @@ optionData$d2 <- optionData$d1 - sig * sqrt(t)
 ```
 
 ### Greeks
-{equations}
+**Delta** $\Delta$:
+
+* Delta measures the sensitivity of an option's price to changes in the price of the underlying asset.
+* $\Delta_{c} = \frac{\partial C}{\partial S} = e^{-qt} N(d_{1})$
+
+**Gamma** $\Gamma$:
+
+* Gamma measures the rate of change of Delta with respect to changes in the price of the underlying asset.
+* $\Gamma_{c} = \frac{\partial^2 C}{\partial S^2} = e^{-qt} * \frac{N'(d_{1})}{S\sigma\sqrt{t}}$
+
+**Theta** $\Theta$:
+
+* Theta measures the rate of change of an option's price with respect to the passage of time. (Theta equation below is annualized, divide by 365 or 252 to get per-calendar-day or per-trading-day theta)
+* $\Theta_{c} = \frac{\partial C}{\partial t} = -(\frac{S\sigma e^{-qt}}{2\sqrt{t}} N'(d_{1})) - rKe^{-rt}N(d_{2}) + qSe^{-qt}N(d_{1})$
+
+**Vega** $\nu$:
+
+* Vega measures the sensitivity of an option's price to changes in volatility.
+* $\nu_{c} = \frac{\partial C}{\partial \sigma} = Se^{-qt}\sqrt{t}N'(d_{1})$
+
+**Rho** $\rho$:
+
+* Rho measures the sensitivity of an option's price to changes in interest rates.
+* $\rho_{c} = \frac{\partial C}{\partial r} = Kte^{-rt}N(d_{2})$
+
 ```{r}
 X <- optionData$Strike.Price
 Multiplier <- optionData$Multiplier
@@ -206,7 +234,10 @@ optionData$Delta <- Multiplier * exp(-q * t) * pnorm(d1)
 optionData$Gamma <- Multiplier * exp(-q * t) * dnorm(d1) / (SPOT * sig * sqrt(t))
 optionData$Theta <- Multiplier * {-0.5 * SPOT * sig * exp(-q * t) * dnorm(d1) / sqrt(t) - r * X * exp(-r * t) * pnorm(d2) + q * SPOT * exp(-q * t) * pnorm(d1)}
 optionData$Vega  <- Multiplier * SPOT * exp(-q * t) * sqrt(t) * dnorm(d1)
-optionData[, c("Strike.Price", "Quantity", "Implied.volatility", "Delta", "Gamma", "Theta", "Vega", "time_to_expiry_years")]
+optionData$Rho <- Multiplier * X * t * exp(-r * t) * pnorm(d2)
+
+# Print data frame
+optionData[, c("Strike.Price", "Quantity", "Implied.volatility", "Delta", "Gamma", "Theta", "Vega", "Rho")]
 ```
 
 ### Portfolio Greeks

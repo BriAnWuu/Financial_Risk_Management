@@ -2799,7 +2799,7 @@ quantitative risks inherent in a portfolio of options on the S&amp;P 500
 index. Leveraging the versatile capabilities of the R programming
 language, we perform a series of tasks to quantify and mitigate risks
 associated with the portfolio.</p>
-<p>Project Objectives:</p>
+<p><strong>Project Objectives:</strong></p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Calculation of Greek Letter Risks:</strong> We begin by
 calculating the Greek letter risks of the portfolio, including delta,
@@ -2924,18 +2924,18 @@ optionData$time_to_expiry_days</code></pre>
 <p>Linear Interpolation of interest rate:<br />
 <span class="math display">\[R_{n} = R_{1} + \frac{R_{2} - R_{1}}{t_{2}
 - t_{1}} * (t_{n} - t_{1})\]</span><br />
-where:<br />
-    <span class="math inline">\(R_{n}\)</span> = unknown rate<br />
-    <span class="math inline">\(R_{1}\)</span> = rate for the shorter
-designated maturity (nearest to the reset date)<br />
-    <span class="math inline">\(R_{2}\)</span> = rate for the longer
-designated maturity (nearest to the reset date)<br />
-    <span class="math inline">\(t_{n}\)</span> = number of calendar days
-to expiry of option<br />
-    <span class="math inline">\(t_{1}\)</span> = number of calendar days
-to the shorter designated maturity<br />
-    <span class="math inline">\(t_{2}\)</span> = number of calendar days
-to the longer designated maturity</p>
+where: <span class="math display">\[\begin{align*}
+&amp; R_{n} = \text{unknown rate}  \\
+&amp; R_{1} = \text{rate for the shorter designated maturity (nearest to
+the reset date)}  \\
+&amp; R_{2} = \text{rate for the longer designated maturity (nearest to
+the reset date)}  \\
+&amp; t_{n} = \text{number of calendar days to expiry of option}  \\
+&amp; t_{1} = \text{number of calendar days to the shorter designated
+maturity}  \\
+&amp; t_{2} = \text{number of calendar days to the longer designated
+maturity}  
+\end{align*}\]</span></p>
 <pre class="r"><code>rates &lt;- rep(0, n)
 
 # Rates for each position
@@ -2983,17 +2983,16 @@ optionData$Implied.volatility</code></pre>
 <h3>Compute d1 and d2</h3>
 <p>Price of call option C is given as the following formula: <span class="math display">\[C = SN(d_{1}) - Ke^{-rt}N(d_{2})\]</span> where:
 <span class="math display">\[d_{1} = \frac{\ln(\frac{S}{K}) + (r - q +
-\frac{\sigma^{2}}{2})*t}{\sigma\sqrt t} \]</span> <span class="math display">\[d_{2} = d_{1} - \sigma\sqrt t \]</span>
-where:<br />
-    <span class="math inline">\(S\)</span> = Spot price of underlying
-asset<br />
-    <span class="math inline">\(K\)</span> = Strike price<br />
-    <span class="math inline">\(r\)</span> = Interest rate<br />
-    <span class="math inline">\(q\)</span> = Dividend yield of
-underlying asset<br />
-    <span class="math inline">\(\sigma\)</span> = Volatility<br />
-    <span class="math inline">\(t\)</span> = Time to maturity<br />
-    <span class="math inline">\(N()\)</span> = Normal distribution</p>
+\frac{\sigma^{2}}{2})*t}{\sigma\sqrt{t}}\]</span> <span class="math display">\[d_{2} = d_{1} - \sigma\sqrt{t}\]</span> where:
+<span class="math display">\[\begin{align*}
+&amp; S = \text{Spot price of underlying asset}  \\
+&amp; K = \text{Strike price}  \\
+&amp; r = \text{Interest rate}  \\
+&amp; q = \text{Dividend yield of underlying asset}  \\
+&amp; \sigma = \text{Volatility}  \\
+&amp; t = \text{Time to maturity}  \\
+&amp; N() = \text{Normal distribution}  
+\end{align*}\]</span></p>
 <pre class="r"><code># Utilize R vectorization to make calculations cleaner
 X &lt;- optionData$Strike.Price
 r &lt;- optionData$Rate
@@ -3005,7 +3004,44 @@ optionData$d2 &lt;- optionData$d1 - sig * sqrt(t)</code></pre>
 </div>
 <div id="greeks" class="section level3">
 <h3>Greeks</h3>
-<p>{equations}</p>
+<p><strong>Delta</strong> <span class="math inline">\(\Delta\)</span>:</p>
+<ul>
+<li>Delta measures the sensitivity of an option’s price to changes in
+the price of the underlying asset.</li>
+<li><span class="math inline">\(\Delta_{c} = \frac{\partial C}{\partial
+S} = e^{-qt} N(d_{1})\)</span></li>
+</ul>
+<p><strong>Gamma</strong> <span class="math inline">\(\Gamma\)</span>:</p>
+<ul>
+<li>Gamma measures the rate of change of Delta with respect to changes
+in the price of the underlying asset.</li>
+<li><span class="math inline">\(\Gamma_{c} = \frac{\partial^2
+C}{\partial S^2} = e^{-qt} *
+\frac{N&#39;(d_{1})}{S\sigma\sqrt{t}}\)</span></li>
+</ul>
+<p><strong>Theta</strong> <span class="math inline">\(\Theta\)</span>:</p>
+<ul>
+<li>Theta measures the rate of change of an option’s price with respect
+to the passage of time. (Theta equation below is annualized, divide by
+365 or 252 to get per-calendar-day or per-trading-day theta)</li>
+<li><span class="math inline">\(\Theta_{c} = \frac{\partial C}{\partial
+t} = -(\frac{S\sigma e^{-qt}}{2\sqrt{t}} N&#39;(d_{1})) -
+rKe^{-rt}N(d_{2}) + qSe^{-qt}N(d_{1})\)</span></li>
+</ul>
+<p><strong>Vega</strong> <span class="math inline">\(\nu\)</span>:</p>
+<ul>
+<li>Vega measures the sensitivity of an option’s price to changes in
+volatility.</li>
+<li><span class="math inline">\(\nu_{c} = \frac{\partial C}{\partial
+\sigma} = Se^{-qt}\sqrt{t}N&#39;(d_{1})\)</span></li>
+</ul>
+<p><strong>Rho</strong> <span class="math inline">\(\rho\)</span>:</p>
+<ul>
+<li>Rho measures the sensitivity of an option’s price to changes in
+interest rates.</li>
+<li><span class="math inline">\(\rho_{c} = \frac{\partial C}{\partial r}
+= Kte^{-rt}N(d_{2})\)</span></li>
+</ul>
 <pre class="r"><code>X &lt;- optionData$Strike.Price
 Multiplier &lt;- optionData$Multiplier
 t &lt;- optionData$time_to_expiry_years
@@ -3018,10 +3054,13 @@ optionData$Delta &lt;- Multiplier * exp(-q * t) * pnorm(d1)
 optionData$Gamma &lt;- Multiplier * exp(-q * t) * dnorm(d1) / (SPOT * sig * sqrt(t))
 optionData$Theta &lt;- Multiplier * {-0.5 * SPOT * sig * exp(-q * t) * dnorm(d1) / sqrt(t) - r * X * exp(-r * t) * pnorm(d2) + q * SPOT * exp(-q * t) * pnorm(d1)}
 optionData$Vega  &lt;- Multiplier * SPOT * exp(-q * t) * sqrt(t) * dnorm(d1)
-optionData[, c(&quot;Strike.Price&quot;, &quot;Quantity&quot;, &quot;Implied.volatility&quot;, &quot;Delta&quot;, &quot;Gamma&quot;, &quot;Theta&quot;, &quot;Vega&quot;, &quot;time_to_expiry_years&quot;)]</code></pre>
+optionData$Rho &lt;- Multiplier * X * t * exp(-r * t) * pnorm(d2)
+
+# Print data frame
+optionData[, c(&quot;Strike.Price&quot;, &quot;Quantity&quot;, &quot;Implied.volatility&quot;, &quot;Delta&quot;, &quot;Gamma&quot;, &quot;Theta&quot;, &quot;Vega&quot;, &quot;Rho&quot;)]</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Strike.Price"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Quantity"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Implied.volatility"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Delta"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Gamma"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["Theta"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["Vega"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["time_to_expiry_years"],"name":[8],"type":["dbl"],"align":["right"]}],"data":[{"1":"3410","2":"3000","3":"0.2652693","4":"37.74701","5":"0.09531397","6":"-34071.55","7":"56832.40","8":"0.2102169","_rn_":"1"},{"1":"3420","2":"6000","3":"0.2627666","4":"36.67535","5":"0.09534343","6":"-33460.14","7":"56313.62","8":"0.2102169","_rn_":"2"},{"1":"3490","2":"-1000","3":"0.2455773","4":"29.05675","5":"0.09288545","6":"-28576.11","7":"51272.97","8":"0.2102169","_rn_":"3"},{"1":"3500","2":"-18000","3":"0.2431991","4":"27.96801","5":"0.09210725","6":"-27804.48","7":"50351.03","8":"0.2102169","_rn_":"4"},{"1":"3430","2":"3000","3":"0.2602420","4":"35.59514","5":"0.09529514","6":"-32821.09","7":"55744.31","8":"0.2102169","_rn_":"5"},{"1":"3390","2":"3000","3":"0.2702225","4":"39.86354","5":"0.09503455","6":"-35213.03","7":"57723.88","8":"0.2102169","_rn_":"6"},{"1":"3460","2":"-1500","3":"0.2526837","4":"32.32094","5":"0.09459735","6":"-30763.65","7":"53728.99","8":"0.2102169","_rn_":"7"},{"1":"3470","2":"-9000","3":"0.2502231","4":"31.22610","5":"0.09415306","6":"-30041.16","7":"52955.89","8":"0.2102169","_rn_":"8"},{"1":"3475","2":"-3000","3":"0.2490030","4":"30.67873","5":"0.09388981","6":"-29673.33","7":"52550.34","8":"0.2102169","_rn_":"9"},{"1":"3440","2":"3000","3":"0.2499472","4":"37.38233","5":"0.08087694","6":"-25244.38","7":"70471.24","8":"0.3260274","_rn_":"10"},{"1":"3510","2":"-9000","3":"0.2361392","4":"30.95300","5":"0.07972316","6":"-22304.74","7":"65628.37","8":"0.3260274","_rn_":"11"},{"1":"3520","2":"-6000","3":"0.2342364","4":"30.03244","5":"0.07930650","6":"-21844.81","7":"64759.29","8":"0.3260274","_rn_":"12"},{"1":"3405","2":"4000","3":"0.2697741","4":"36.95242","5":"0.10361109","6":"-38555.80","7":"50768.01","8":"0.1698630","_rn_":"13"},{"1":"3485","2":"-12000","3":"0.2477804","4":"27.46265","5":"0.09971407","6":"-31425.06","7":"44875.27","8":"0.1698630","_rn_":"14"},{"1":"3415","2":"2500","3":"0.2723064","4":"34.16551","5":"0.11267643","6":"-43034.84","7":"43799.78","8":"0.1335046","_rn_":"15"},{"1":"3420","2":"1500","3":"0.2709732","4":"33.53492","5":"0.11242341","6":"-42529.50","7":"43487.47","8":"0.1335046","_rn_":"16"},{"1":"3440","2":"1000","3":"0.2650766","4":"30.96325","5":"0.11119822","6":"-40292.94","7":"42077.53","8":"0.1335046","_rn_":"17"},{"1":"3490","2":"-7500","3":"0.2511416","4":"24.61570","5":"0.10492587","6":"-34205.82","7":"37616.83","8":"0.1335046","_rn_":"18"},{"1":"3500","2":"-4500","3":"0.2486634","4":"23.39742","5":"0.10308290","6":"-32960.12","7":"36591.45","8":"0.1335046","_rn_":"19"},{"1":"3515","2":"-3000","3":"0.2450006","4":"21.60183","5":"0.09999953","6":"-31060.09","7":"34974.07","8":"0.1335046","_rn_":"20"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Strike.Price"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Quantity"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Implied.volatility"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Delta"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Gamma"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["Theta"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["Vega"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["Rho"],"name":[8],"type":["dbl"],"align":["right"]}],"data":[{"1":"3410","2":"3000","3":"0.2652693","4":"37.74701","5":"0.09531397","6":"-34071.55","7":"56832.40","8":"23894.558","_rn_":"1"},{"1":"3420","2":"6000","3":"0.2627666","4":"36.67535","5":"0.09534343","6":"-33460.14","7":"56313.62","8":"23256.702","_rn_":"2"},{"1":"3490","2":"-1000","3":"0.2455773","4":"29.05675","5":"0.09288545","6":"-28576.11","7":"51272.97","8":"18639.814","_rn_":"3"},{"1":"3500","2":"-18000","3":"0.2431991","4":"27.96801","5":"0.09210725","6":"-27804.48","7":"50351.03","8":"17969.192","_rn_":"4"},{"1":"3430","2":"3000","3":"0.2602420","4":"35.59514","5":"0.09529514","6":"-32821.09","7":"55744.31","8":"22610.865","_rn_":"5"},{"1":"3390","2":"3000","3":"0.2702225","4":"39.86354","5":"0.09503455","6":"-35213.03","7":"57723.88","8":"25145.553","_rn_":"6"},{"1":"3460","2":"-1500","3":"0.2526837","4":"32.32094","5":"0.09459735","6":"-30763.65","7":"53728.99","8":"20635.564","_rn_":"7"},{"1":"3470","2":"-9000","3":"0.2502231","4":"31.22610","5":"0.09415306","6":"-30041.16","7":"52955.89","8":"19969.158","_rn_":"8"},{"1":"3475","2":"-3000","3":"0.2490030","4":"30.67873","5":"0.09388981","6":"-29673.33","7":"52550.34","8":"19634.936","_rn_":"9"},{"1":"3440","2":"3000","3":"0.2499472","4":"37.38233","5":"0.08087694","6":"-25244.38","7":"70471.24","8":"36206.566","_rn_":"10"},{"1":"3510","2":"-9000","3":"0.2361392","4":"30.95300","5":"0.07972316","6":"-22304.74","7":"65628.37","8":"30330.356","_rn_":"11"},{"1":"3520","2":"-6000","3":"0.2342364","4":"30.03244","5":"0.07930650","6":"-21844.81","7":"64759.29","8":"29474.475","_rn_":"12"},{"1":"3405","2":"4000","3":"0.2697741","4":"36.95242","5":"0.10361109","6":"-38555.80","7":"50768.01","8":"19045.541","_rn_":"13"},{"1":"3485","2":"-12000","3":"0.2477804","4":"27.46265","5":"0.09971407","6":"-31425.06","7":"44875.27","8":"14342.687","_rn_":"14"},{"1":"3415","2":"2500","3":"0.2723064","4":"34.16551","5":"0.11267643","6":"-43034.84","7":"43799.78","8":"13976.574","_rn_":"15"},{"1":"3420","2":"1500","3":"0.2709732","4":"33.53492","5":"0.11242341","6":"-42529.50","7":"43487.47","8":"13729.327","_rn_":"16"},{"1":"3440","2":"1000","3":"0.2650766","4":"30.96325","5":"0.11119822","6":"-40292.94","7":"42077.53","8":"12717.457","_rn_":"17"},{"1":"3490","2":"-7500","3":"0.2511416","4":"24.61570","5":"0.10492587","6":"-34205.82","7":"37616.83","8":"10186.047","_rn_":"18"},{"1":"3500","2":"-4500","3":"0.2486634","4":"23.39742","5":"0.10308290","6":"-32960.12","7":"36591.45","8":"9694.918","_rn_":"19"},{"1":"3515","2":"-3000","3":"0.2450006","4":"21.60183","5":"0.09999953","6":"-31060.09","7":"34974.07","8":"8968.451","_rn_":"20"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
