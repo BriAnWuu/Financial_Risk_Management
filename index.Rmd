@@ -16,7 +16,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE) # Suppress warning and messa
 ## **Introduction**
 This project aims to provide a comprehensive analysis of the quantitative risks inherent in a portfolio of options on the S&P 500 index. Leveraging the versatile capabilities of the R programming language, we perform a series of tasks to quantify and mitigate risks associated with the portfolio.
 
-Project Objectives:
+**Project Objectives:**
 
 1. **Calculation of Greek Letter Risks:** We begin by calculating the Greek letter risks of the portfolio, including delta, gamma, theta, vega, and rho. These measures provide insights into the portfolio's sensitivity to changes in underlying factors such as stock price, volatility, time decay, and interest rates.
 
@@ -33,18 +33,18 @@ Project Objectives:
 See more details at my [github repository](https://github.com/BriAnWuu/Financial_Risk_Management).
 
 ### Install Packages
-All R packages below are on CRAN, and can be installed with `install.packages`.
+All R packages below are on [CRAN](https://cran.r-project.org/), and can be installed with `install.packages` on any R Console.
 ```{r}
-library(xts)
-library(rmgarch)
-library(fOptions)
-library(openxlsx)
-library(tidyverse)
-library(lubridate)
-library(SciViews)
-library(ggplot2)
-library(scales)
-options(scipen = 999)
+library(xts) # Time series data in finance
+library(rmgarch) # ARMA, GARCH, and DCC models
+library(fOptions) # Option valuation
+library(openxlsx) # Spreadsheet reading
+library(tidyverse) # Data Science package
+library(lubridate) # Makes it easier to deal with dates and times
+library(SciViews) # R workflow
+library(ggplot2) # Data visualization
+library(scales) # Override ggplot2 graphs
+options(scipen = 999) # Avoid scientific notation throughout document
 ```
 
 ## **Portfolio Overview**
@@ -62,7 +62,9 @@ q <- currentInfo[3, 2] # Dividend yield of SPX
 ```
 
 ### Portfolio
+
 ```{r}
+# Portfolio consists of 20 options
 optionData
 ```
 
@@ -83,6 +85,7 @@ q # Dividend yield of SPX
 ## **Greek Letter Risks of Portfolio**
 
 ### Time to Expiry
+Calculate the time to expiry for each option position in the portfolio.
 ```{r}
 n <- nrow(optionData) # Number of option positions
 
@@ -106,13 +109,24 @@ for (i in 1:n) {
 
 # Add time_to_expiry to optionData
 optionData$time_to_expiry_days <- time_to_expiry_days
-optionData$time_to_expiry_years <- time_to_expiry_days / 365 # Annualized time_to_expiry
+
+# Calculate time to expiry in terms of years
+optionData$time_to_expiry_years <- time_to_expiry_days / 365 
+
+# Print
 optionData$time_to_expiry_days
 ```
 
 ### Interest Rates 
-Linear Interpolation of interest rate
-Rn = R1 + (R2 - R1) / (t2 - t1) * (tn - t1)
+Linear Interpolation of interest rate:  
+$$R_{n} = R_{1} + \frac{R_{2} - R_{1}}{t_{2} - t_{1}} * (t_{n} - t_{1})$$  
+where:  
+    $R_{n}$ = unknown rate  
+    $R_{1}$ = rate for the shorter designated maturity (nearest to the reset date)  
+    $R_{2}$ = rate for the longer designated maturity (nearest to the reset date)  
+    $t_{n}$ = number of calendar days to expiry of option  
+    $t_{1}$ = number of calendar days to the shorter designated maturity  
+    $t_{2}$ = number of calendar days to the longer designated maturity  
 ```{r}
 rates <- rep(0, n)
 
@@ -153,9 +167,21 @@ optionData$Implied.volatility
 ```
 
 ### Compute d1 and d2
-{equation}
-R vectorization convenient
+Price of call option C is given as the following formula:
+$$C = SN(d_{1}) - Ke^{-rt}N(d_{2})$$
+where:
+$$d_{1} = \frac{\ln(\frac{S}{K}) + (r - q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt t} $$
+$$d_{2} = d_{1} - \sigma\sqrt t $$
+where:  
+    $S$ = Spot price of underlying asset  
+    $K$ = Strike price  
+    $r$ = Interest rate  
+    $q$ = Dividend yield of underlying asset  
+    $\sigma$ = Volatility  
+    $t$ = Time to maturity  
+    $N()$ = Normal distribution  
 ```{r}
+# Utilize R vectorization to make calculations cleaner
 X <- optionData$Strike.Price
 r <- optionData$Rate
 sig <- optionData$Implied.volatility
@@ -289,7 +315,7 @@ returns <- indexData[(idx_DATE - 999):idx_DATE, c("Date", "SPX.Return", "VIX.Ret
 returns
 ```
 
-### Model Log Returns using GARCH
+### Model Log Returns using ARMA and GARCH
 {equation}
 ```{r}
 # Univariate GARCH specification prior to fitting

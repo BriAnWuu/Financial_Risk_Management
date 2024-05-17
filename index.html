@@ -2831,29 +2831,30 @@ Period):</strong> Extending the analysis, we calculate the filtered
 historical simulation VaR for a one-month holding period, providing
 insights into the longer-term risk exposure of the portfolio.</p></li>
 </ol>
-<p>See more detail at my <a href="https://github.com/BriAnWuu/Financial_Risk_Management">github
+<p>See more details at my <a href="https://github.com/BriAnWuu/Financial_Risk_Management">github
 repository</a>.</p>
 <div id="install-packages" class="section level3">
 <h3>Install Packages</h3>
-<p>All R packages below are on CRAN, and can be installed with
-<code>install.packages</code>.</p>
-<pre class="r"><code>library(xts)
-library(rmgarch)
-library(fOptions)
-library(openxlsx)
-library(tidyverse)
-library(lubridate)
-library(SciViews)
-library(ggplot2)
-library(scales)
-options(scipen = 999)</code></pre>
+<p>All R packages below are on <a href="https://cran.r-project.org/">CRAN</a>, and can be installed with
+<code>install.packages</code> on any R Console.</p>
+<pre class="r"><code>library(xts) # Time series data in finance
+library(rmgarch) # ARMA, GARCH, and DCC models
+library(fOptions) # Option valuation
+library(openxlsx) # Spreadsheet reading
+library(tidyverse) # Data Science package
+library(lubridate) # Makes it easier to deal with dates and times
+library(SciViews) # R workflow
+library(ggplot2) # Data visualization
+library(scales) # Override ggplot2 graphs
+options(scipen = 999) # Avoid scientific notation throughout document</code></pre>
 </div>
 </div>
 <div id="portfolio-overview" class="section level2">
 <h2><strong>Portfolio Overview</strong></h2>
 <div id="portfolio" class="section level3">
 <h3>Portfolio</h3>
-<pre class="r"><code>optionData</code></pre>
+<pre class="r"><code># Portfolio consists of 20 options
+optionData</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Underlying"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Call.or.Put"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Strike.Price"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Expiration.Date"],"name":[4],"type":["date"],"align":["right"]},{"label":["Expiration.Time"],"name":[5],"type":["chr"],"align":["left"]},{"label":["Quantity"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["Price"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["Multiplier"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["Market.Value"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["Implied.volatility"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["Delta"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["Gamma"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["Theta"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["Vega"],"name":[14],"type":["dbl"],"align":["right"]}],"data":[{"1":"SPX Index","2":"C","3":"3410","4":"2021-01-15","5":"Open","6":"3000","7":"97.65","8":"100","9":"29295000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"1"},{"1":"SPX Index","2":"C","3":"3420","4":"2021-01-15","5":"Open","6":"6000","7":"92.95","8":"100","9":"55770000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"2"},{"1":"SPX Index","2":"C","3":"3490","4":"2021-01-15","5":"Open","6":"-1000","7":"63.45","8":"100","9":"-6345000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"3"},{"1":"SPX Index","2":"C","3":"3500","4":"2021-01-15","5":"Open","6":"-18000","7":"59.75","8":"100","9":"-107550000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"4"},{"1":"SPX Index","2":"C","3":"3430","4":"2021-01-15","5":"Open","6":"3000","7":"88.35","8":"100","9":"26505000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"5"},{"1":"SPX Index","2":"C","3":"3390","4":"2021-01-15","5":"Open","6":"3000","7":"107.35","8":"100","9":"32205000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"6"},{"1":"SPX Index","2":"C","3":"3460","4":"2021-01-15","5":"Open","6":"-1500","7":"75.25","8":"100","9":"-11287500","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"7"},{"1":"SPX Index","2":"C","3":"3470","4":"2021-01-15","5":"Open","6":"-9000","7":"71.15","8":"100","9":"-64035000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"8"},{"1":"SPX Index","2":"C","3":"3475","4":"2021-01-15","5":"Open","6":"-3000","7":"69.15","8":"100","9":"-20745000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"9"},{"1":"SPX Index","2":"C","3":"3440","4":"2021-02-26","5":"Close","6":"3000","7":"111.85","8":"100","9":"33555000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"10"},{"1":"SPX Index","2":"C","3":"3510","4":"2021-02-26","5":"Close","6":"-9000","7":"81.85","8":"100","9":"-73665000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"11"},{"1":"SPX Index","2":"C","3":"3520","4":"2021-02-26","5":"Close","6":"-6000","7":"78.00","8":"100","9":"-46800000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"12"},{"1":"SPX Index","2":"C","3":"3405","4":"2020-12-31","5":"Close","6":"4000","7":"87.10","8":"100","9":"34840000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"13"},{"1":"SPX Index","2":"C","3":"3485","4":"2020-12-31","5":"Close","6":"-12000","7":"53.65","8":"100","9":"-64380000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"14"},{"1":"SPX Index","2":"C","3":"3415","4":"2020-12-18","5":"Open","6":"2500","7":"70.30","8":"100","9":"17575000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"15"},{"1":"SPX Index","2":"C","3":"3420","4":"2020-12-18","5":"Open","6":"1500","7":"68.20","8":"100","9":"10230000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"16"},{"1":"SPX Index","2":"C","3":"3440","4":"2020-12-18","5":"Open","6":"1000","7":"59.90","8":"100","9":"5990000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"17"},{"1":"SPX Index","2":"C","3":"3490","4":"2020-12-18","5":"Open","6":"-7500","7":"41.95","8":"100","9":"-31462500","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"18"},{"1":"SPX Index","2":"C","3":"3500","4":"2020-12-18","5":"Open","6":"-4500","7":"38.90","8":"100","9":"-17505000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"19"},{"1":"SPX Index","2":"C","3":"3515","4":"2020-12-18","5":"Open","6":"-3000","7":"34.60","8":"100","9":"-10380000","10":"NA","11":"NA","12":"NA","13":"NA","14":"NA","_rn_":"20"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
@@ -2884,6 +2885,8 @@ options(scipen = 999)</code></pre>
 <h2><strong>Greek Letter Risks of Portfolio</strong></h2>
 <div id="time-to-expiry" class="section level3">
 <h3>Time to Expiry</h3>
+<p>Calculate the time to expiry for each option position in the
+portfolio.</p>
 <pre class="r"><code>n &lt;- nrow(optionData) # Number of option positions
 
 # Calculate time to expiry in terms of days
@@ -2906,7 +2909,11 @@ for (i in 1:n) {
 
 # Add time_to_expiry to optionData
 optionData$time_to_expiry_days &lt;- time_to_expiry_days
-optionData$time_to_expiry_years &lt;- time_to_expiry_days / 365 # Annualized time_to_expiry
+
+# Calculate time to expiry in terms of years
+optionData$time_to_expiry_years &lt;- time_to_expiry_days / 365 
+
+# Print
 optionData$time_to_expiry_days</code></pre>
 <pre><code>##  [1]  76.72917  76.72917  76.72917  76.72917  76.72917  76.72917  76.72917
 ##  [8]  76.72917  76.72917 119.00000 119.00000 119.00000  62.00000  62.00000
@@ -2914,8 +2921,21 @@ optionData$time_to_expiry_days</code></pre>
 </div>
 <div id="interest-rates" class="section level3">
 <h3>Interest Rates</h3>
-<p>Linear Interpolation of interest rate Rn = R1 + (R2 - R1) / (t2 - t1)
-* (tn - t1)</p>
+<p>Linear Interpolation of interest rate:<br />
+<span class="math display">\[R_{n} = R_{1} + \frac{R_{2} - R_{1}}{t_{2}
+- t_{1}} * (t_{n} - t_{1})\]</span><br />
+where:<br />
+    <span class="math inline">\(R_{n}\)</span> = unknown rate<br />
+    <span class="math inline">\(R_{1}\)</span> = rate for the shorter
+designated maturity (nearest to the reset date)<br />
+    <span class="math inline">\(R_{2}\)</span> = rate for the longer
+designated maturity (nearest to the reset date)<br />
+    <span class="math inline">\(t_{n}\)</span> = number of calendar days
+to expiry of option<br />
+    <span class="math inline">\(t_{1}\)</span> = number of calendar days
+to the shorter designated maturity<br />
+    <span class="math inline">\(t_{2}\)</span> = number of calendar days
+to the longer designated maturity</p>
 <pre class="r"><code>rates &lt;- rep(0, n)
 
 # Rates for each position
@@ -2961,8 +2981,21 @@ optionData$Implied.volatility</code></pre>
 </div>
 <div id="compute-d1-and-d2" class="section level3">
 <h3>Compute d1 and d2</h3>
-<p>{equation} R vectorization convenient</p>
-<pre class="r"><code>X &lt;- optionData$Strike.Price
+<p>Price of call option C is given as the following formula: <span class="math display">\[C = SN(d_{1}) - Ke^{-rt}N(d_{2})\]</span> where:
+<span class="math display">\[d_{1} = \frac{\ln(\frac{S}{K}) + (r - q +
+\frac{\sigma^{2}}{2})*t}{\sigma\sqrt t} \]</span> <span class="math display">\[d_{2} = d_{1} - \sigma\sqrt t \]</span>
+where:<br />
+    <span class="math inline">\(S\)</span> = Spot price of underlying
+asset<br />
+    <span class="math inline">\(K\)</span> = Strike price<br />
+    <span class="math inline">\(r\)</span> = Interest rate<br />
+    <span class="math inline">\(q\)</span> = Dividend yield of
+underlying asset<br />
+    <span class="math inline">\(\sigma\)</span> = Volatility<br />
+    <span class="math inline">\(t\)</span> = Time to maturity<br />
+    <span class="math inline">\(N()\)</span> = Normal distribution</p>
+<pre class="r"><code># Utilize R vectorization to make calculations cleaner
+X &lt;- optionData$Strike.Price
 r &lt;- optionData$Rate
 sig &lt;- optionData$Implied.volatility
 t &lt;- optionData$time_to_expiry_years
@@ -3086,8 +3119,8 @@ returns</code></pre>
   </script>
 </div>
 </div>
-<div id="model-log-returns-using-garch" class="section level3">
-<h3>Model Log Returns using GARCH</h3>
+<div id="model-log-returns-using-arma-and-garch" class="section level3">
+<h3>Model Log Returns using ARMA and GARCH</h3>
 <p>{equation}</p>
 <pre class="r"><code># Univariate GARCH specification prior to fitting
 # Estimation of the parameters
