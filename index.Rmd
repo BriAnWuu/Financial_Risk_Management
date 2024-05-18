@@ -16,7 +16,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE) # Suppress warning and messa
 ## **Introduction**
 This project aims to provide a comprehensive analysis of the quantitative risks inherent in a portfolio of options on the S&P 500 index. Leveraging the versatile capabilities of the R programming language, we perform a series of tasks to quantify and mitigate risks associated with the portfolio.
 
-**Project Objectives:**
+**Project Objectives:</strong>**
 
 1. **Calculation of Greek Letter Risks:** We begin by calculating the Greek letter risks of the portfolio, including delta, gamma, theta, vega, and rho. These measures provide insights into the portfolio's sensitivity to changes in underlying factors such as stock price, volatility, time decay, and interest rates.
 
@@ -170,7 +170,7 @@ optionData$Implied.volatility
 
 ### Compute d1 and d2
 Price of call option C is given as the following formula:
-$$C = SN(d_{1}) - Ke^{-rt}N(d_{2})$$
+$$C = Se^{-qt}N(d_{1}) - Ke^{-rt}N(d_{2})$$
 where:
 $$d_{1} = \frac{\ln(\frac{S}{K}) + (r - q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt{t}}$$
 $$d_{2} = d_{1} - \sigma\sqrt{t}$$
@@ -209,7 +209,7 @@ optionData$d2 <- optionData$d1 - sig * sqrt(t)
 **Theta** $\Theta$:
 
 * Theta measures the rate of change of an option's price with respect to the passage of time. (Theta equation below is annualized, divide by 365 or 252 to get per-calendar-day or per-trading-day theta)
-* $\Theta_{c} = \frac{\partial C}{\partial t} = -(\frac{S\sigma e^{-qt}}{2\sqrt{t}} N'(d_{1})) - rKe^{-rt}N(d_{2}) + qSe^{-qt}N(d_{1})$
+* $\Theta_{c} = \frac{\partial C}{\partial t} = -e^{-qt}\frac{S\sigma}{2\sqrt{t}} N'(d_{1}) - rKe^{-rt}N(d_{2}) + qSe^{-qt}N(d_{1})$
 
 **Vega** $\nu$:
 
@@ -241,13 +241,13 @@ optionData[, c("Strike.Price", "Quantity", "Implied.volatility", "Delta", "Gamma
 ```
 
 ### Portfolio Greeks
-linearity of greeks
 ```{r}
 portfolioGreeks <- data.frame(row.names = "Portfolio",
                               Delta = sum(optionData$Delta * optionData$Quantity),
                               Gamma = sum(optionData$Gamma * optionData$Quantity),
                               Theta = sum(optionData$Theta * optionData$Quantity),
-                              Vega = sum(optionData$Vega * optionData$Quantity))
+                              Vega = sum(optionData$Vega * optionData$Quantity),
+                              Rho = sum(optionData$Rho * optionData$Quantity))
 format(portfolioGreeks, big.mark = ",")
 ```
 
@@ -334,7 +334,20 @@ VIX %>%
 ## **Modeling SPX and VIX Index**
 
 ### Compute Index Log Return
-Log Return's nice property
+Some nice properties of Logarithmic Returns:
+
+1. **Stationarity:** Log returns tend to be more stationary compared to simple returns. Stationarity implies that statistical properties such as mean, variance, and autocorrelation remain constant over time. Modeling stationary series simplifies the analysis and interpretation of financial data.
+
+2. **Normality:** Log returns often exhibit a more symmetric and approximately normal distribution, especially for assets with high liquidity. This assumption of normality simplifies statistical analysis and allows for the application of various mathematical models and techniques that rely on normality assumptions.
+
+3. **Additivity:** Logarithms have the property of additivity, which means that log returns can be summed over time periods. This property simplifies the calculation of cumulative returns and makes it easier to analyze the overall performance of an investment over multiple periods.
+
+4. **Mathematical Convenience**: Logarithmic transformation simplifies mathematical calculations, particularly when dealing with multiplicative processes or compounding returns. It can also be converted to simple returns easily.
+
+5. **Interpretability:** Log returns are interpretable as continuously compounded returns, which represent the geometric mean rate of return over a given period. 
+
+6. **Empirical Evidence:** Empirical studies have shown that log returns often provide better models for asset price movements compared to simple returns. They capture the essence of financial markets more accurately and are widely used in empirical finance research.
+
 ```{r}
 n_idx <- nrow(indexData)
 indexData$SPX.Return[2:n_idx] <- log(indexData$SPX[2:n_idx] / indexData$SPX[1:(n_idx - 1)])

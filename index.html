@@ -2799,7 +2799,7 @@ quantitative risks inherent in a portfolio of options on the S&amp;P 500
 index. Leveraging the versatile capabilities of the R programming
 language, we perform a series of tasks to quantify and mitigate risks
 associated with the portfolio.</p>
-<p><strong>Project Objectives:</strong></p>
+<p><strong>Project Objectives:</strong></strong></p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Calculation of Greek Letter Risks:</strong> We begin by
 calculating the Greek letter risks of the portfolio, including delta,
@@ -2981,9 +2981,9 @@ optionData$Implied.volatility</code></pre>
 </div>
 <div id="compute-d1-and-d2" class="section level3">
 <h3>Compute d1 and d2</h3>
-<p>Price of call option C is given as the following formula: <span class="math display">\[C = SN(d_{1}) - Ke^{-rt}N(d_{2})\]</span> where:
-<span class="math display">\[d_{1} = \frac{\ln(\frac{S}{K}) + (r - q +
-\frac{\sigma^{2}}{2})*t}{\sigma\sqrt{t}}\]</span> <span class="math display">\[d_{2} = d_{1} - \sigma\sqrt{t}\]</span> where:
+<p>Price of call option C is given as the following formula: <span class="math display">\[C = Se^{-qt}N(d_{1}) - Ke^{-rt}N(d_{2})\]</span>
+where: <span class="math display">\[d_{1} = \frac{\ln(\frac{S}{K}) + (r
+- q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt{t}}\]</span> <span class="math display">\[d_{2} = d_{1} - \sigma\sqrt{t}\]</span> where:
 <span class="math display">\[\begin{align*}
 &amp; S = \text{Spot price of underlying asset}  \\
 &amp; K = \text{Strike price}  \\
@@ -3025,8 +3025,8 @@ C}{\partial S^2} = e^{-qt} *
 to the passage of time. (Theta equation below is annualized, divide by
 365 or 252 to get per-calendar-day or per-trading-day theta)</li>
 <li><span class="math inline">\(\Theta_{c} = \frac{\partial C}{\partial
-t} = -(\frac{S\sigma e^{-qt}}{2\sqrt{t}} N&#39;(d_{1})) -
-rKe^{-rt}N(d_{2}) + qSe^{-qt}N(d_{1})\)</span></li>
+t} = -e^{-qt}\frac{S\sigma}{2\sqrt{t}} N&#39;(d_{1}) - rKe^{-rt}N(d_{2})
++ qSe^{-qt}N(d_{1})\)</span></li>
 </ul>
 <p><strong>Vega</strong> <span class="math inline">\(\nu\)</span>:</p>
 <ul>
@@ -3066,16 +3066,16 @@ optionData[, c(&quot;Strike.Price&quot;, &quot;Quantity&quot;, &quot;Implied.vol
 </div>
 <div id="portfolio-greeks" class="section level3">
 <h3>Portfolio Greeks</h3>
-<p>linearity of greeks</p>
 <pre class="r"><code>portfolioGreeks &lt;- data.frame(row.names = &quot;Portfolio&quot;,
                               Delta = sum(optionData$Delta * optionData$Quantity),
                               Gamma = sum(optionData$Gamma * optionData$Quantity),
                               Theta = sum(optionData$Theta * optionData$Quantity),
-                              Vega = sum(optionData$Vega * optionData$Quantity))
+                              Vega = sum(optionData$Vega * optionData$Quantity),
+                              Rho = sum(optionData$Rho * optionData$Quantity))
 format(portfolioGreeks, big.mark = &quot;,&quot;)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Delta"],"name":[1],"type":["I<chr>"],"align":["right"]},{"label":["Gamma"],"name":[2],"type":["I<chr>"],"align":["right"]},{"label":["Theta"],"name":[3],"type":["I<chr>"],"align":["right"]},{"label":["Vega"],"name":[4],"type":["I<chr>"],"align":["right"]}],"data":[{"1":"-1,110,763","2":"-4,314.9","3":"1,192,841,005","4":"-2,261,785,720","_rn_":"Portfolio"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Delta"],"name":[1],"type":["I<chr>"],"align":["right"]},{"label":["Gamma"],"name":[2],"type":["I<chr>"],"align":["right"]},{"label":["Theta"],"name":[3],"type":["I<chr>"],"align":["right"]},{"label":["Vega"],"name":[4],"type":["I<chr>"],"align":["right"]},{"label":["Rho"],"name":[5],"type":["I<chr>"],"align":["right"]}],"data":[{"1":"-1,110,763","2":"-4,314.9","3":"1,192,841,005","4":"-2,261,785,720","5":"-772,978,090","_rn_":"Portfolio"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -3143,7 +3143,36 @@ indexData</code></pre>
 <h2><strong>Modeling SPX and VIX Index</strong></h2>
 <div id="compute-index-log-return" class="section level3">
 <h3>Compute Index Log Return</h3>
-<p>Log Return’s nice property</p>
+<p>Some nice properties of Logarithmic Returns:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Stationarity:</strong> Log returns tend to be more
+stationary compared to simple returns. Stationarity implies that
+statistical properties such as mean, variance, and autocorrelation
+remain constant over time. Modeling stationary series simplifies the
+analysis and interpretation of financial data.</p></li>
+<li><p><strong>Normality:</strong> Log returns often exhibit a more
+symmetric and approximately normal distribution, especially for assets
+with high liquidity. This assumption of normality simplifies statistical
+analysis and allows for the application of various mathematical models
+and techniques that rely on normality assumptions.</p></li>
+<li><p><strong>Additivity:</strong> Logarithms have the property of
+additivity, which means that log returns can be summed over time
+periods. This property simplifies the calculation of cumulative returns
+and makes it easier to analyze the overall performance of an investment
+over multiple periods.</p></li>
+<li><p><strong>Mathematical Convenience</strong>: Logarithmic
+transformation simplifies mathematical calculations, particularly when
+dealing with multiplicative processes or compounding returns. It can
+also be converted to simple returns easily.</p></li>
+<li><p><strong>Interpretability:</strong> Log returns are interpretable
+as continuously compounded returns, which represent the geometric mean
+rate of return over a given period.</p></li>
+<li><p><strong>Empirical Evidence:</strong> Empirical studies have shown
+that log returns often provide better models for asset price movements
+compared to simple returns. They capture the essence of financial
+markets more accurately and are widely used in empirical finance
+research.</p></li>
+</ol>
 <pre class="r"><code>n_idx &lt;- nrow(indexData)
 indexData$SPX.Return[2:n_idx] &lt;- log(indexData$SPX[2:n_idx] / indexData$SPX[1:(n_idx - 1)])
 indexData$VIX.Return[2:n_idx] &lt;- log(indexData$VIX[2:n_idx] / indexData$VIX[1:(n_idx - 1)])
