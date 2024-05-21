@@ -3143,30 +3143,38 @@ indexData</code></pre>
 <h2><strong>Modeling SPX and VIX Index</strong></h2>
 <div id="compute-index-log-return" class="section level3">
 <h3>Compute Index Log Return</h3>
+<p>Log Returns can be define as: <span class="math display">\[z_{t} =
+ln(\frac{p_{t}}{p_{t-1}}) = ln(1+r_{t})\]</span> where: <span class="math display">\[\begin{align*}
+&amp; p_{t} = \text{Price of an asset at time t}  \\
+&amp; p_{t-1} = \text{Price of an asset at time t-1}  \\
+&amp; r_{t} = \text{Rate of return at time t}
+\end{align*}\]</span></p>
 <p>Some nice properties of Logarithmic Returns:</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Stationarity:</strong> Log returns tend to be more
-stationary compared to simple returns. Stationarity implies that
-statistical properties such as mean, variance, and autocorrelation
-remain constant over time. Modeling stationary series simplifies the
-analysis and interpretation of financial data.</p></li>
 <li><p><strong>Normality:</strong> Log returns often exhibit a more
 symmetric and approximately normal distribution, especially for assets
 with high liquidity. This assumption of normality simplifies statistical
 analysis and allows for the application of various mathematical models
 and techniques that rely on normality assumptions.</p></li>
 <li><p><strong>Additivity:</strong> Logarithms have the property of
-additivity, which means that log returns can be summed over time
-periods. This property simplifies the calculation of cumulative returns
-and makes it easier to analyze the overall performance of an investment
-over multiple periods.</p></li>
+additivity, which means that log returns can be summed <strong>over time
+periods</strong>. This property simplifies the calculation of cumulative
+returns and makes it easier to analyze the overall performance of an
+investment over multiple periods.</p></li>
 <li><p><strong>Mathematical Convenience</strong>: Logarithmic
 transformation simplifies mathematical calculations, particularly when
-dealing with multiplicative processes or compounding returns. It can
-also be converted to simple returns easily.</p></li>
+dealing with multiplicative processes or <strong>compounding
+returns</strong>. It can also be converted to simple returns
+easily.</p></li>
+<li><p><strong>Stationarity:</strong> Log returns tend to be
+<strong>more stationary</strong> compared to simple returns.
+Stationarity implies that statistical properties such as mean, variance,
+and autocorrelation remain constant over time. Modeling stationary
+series simplifies the analysis and interpretation of financial
+data.</p></li>
 <li><p><strong>Interpretability:</strong> Log returns are interpretable
-as continuously compounded returns, which represent the geometric mean
-rate of return over a given period.</p></li>
+as <strong>continuously compounded returns</strong>, which represent the
+geometric mean rate of return over a given period.</p></li>
 <li><p><strong>Empirical Evidence:</strong> Empirical studies have shown
 that log returns often provide better models for asset price movements
 compared to simple returns. They capture the essence of financial
