@@ -3147,7 +3147,7 @@ indexData</code></pre>
 ln(\frac{p_{t}}{p_{t-1}}) = ln(1+r_{t})\]</span> where: <span class="math display">\[\begin{align*}
 &amp; p_{t} = \text{Price of an asset at time t}  \\
 &amp; p_{t-1} = \text{Price of an asset at time t-1}  \\
-&amp; r_{t} = \text{Rate of return at time t}
+&amp; r_{t} = \text{Rate (in log returns) of return at time t}
 \end{align*}\]</span></p>
 <p>Some nice properties of Logarithmic Returns:</p>
 <ol style="list-style-type: decimal">
@@ -3158,9 +3158,9 @@ analysis and allows for the application of various mathematical models
 and techniques that rely on normality assumptions.</p></li>
 <li><p><strong>Additivity:</strong> Logarithms have the property of
 additivity, which means that log returns can be summed <strong>over time
-periods</strong>. This property simplifies the calculation of cumulative
-returns and makes it easier to analyze the overall performance of an
-investment over multiple periods.</p></li>
+periods</strong>. This property simplifies the calculation of
+<strong>cumulative returns</strong> and makes it easier to analyze the
+overall performance of an investment over multiple periods.</p></li>
 <li><p><strong>Mathematical Convenience</strong>: Logarithmic
 transformation simplifies mathematical calculations, particularly when
 dealing with multiplicative processes or <strong>compounding
@@ -3199,11 +3199,13 @@ returns</code></pre>
 <h3>Model Log Returns using ARMA and GARCH</h3>
 <p>{equation}</p>
 <pre class="r"><code># Univariate GARCH specification prior to fitting
-# Estimation of the parameters
+
+# Estimation of the parameters using GARCH(1,1) and ARMA(0,0)
 spec1 &lt;- ugarchspec(variance.model = list(model = &quot;sGARCH&quot;, garchOrder = c(1,1)),
                     mean.model = list(armaOrder = c(0,0), include.mean = FALSE),
                     distribution.model = &quot;norm&quot;)
 
+# Estimation of the parameters using GARCH(1,1) and ARMA(1,0)
 spec2 &lt;- ugarchspec(variance.model = list(model = &quot;sGARCH&quot;, garchOrder = c(1,1)),
                     mean.model = list(armaOrder = c(1,0), include.mean = TRUE),
                     distribution.model = &quot;norm&quot;)

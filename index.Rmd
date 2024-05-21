@@ -340,7 +340,7 @@ where:
 \begin{align*}
 & p_{t} = \text{Price of an asset at time t}  \\
 & p_{t-1} = \text{Price of an asset at time t-1}  \\
-& r_{t} = \text{Rate of return at time t}
+& r_{t} = \text{Rate (in log returns) of return at time t}
 \end{align*}
 
 Some nice properties of Logarithmic Returns:
@@ -372,11 +372,13 @@ returns
 {equation}
 ```{r}
 # Univariate GARCH specification prior to fitting
-# Estimation of the parameters
+
+# Estimation of the parameters using GARCH(1,1) and ARMA(0,0)
 spec1 <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
                     mean.model = list(armaOrder = c(0,0), include.mean = FALSE),
                     distribution.model = "norm")
 
+# Estimation of the parameters using GARCH(1,1) and ARMA(1,0)
 spec2 <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1,1)),
                     mean.model = list(armaOrder = c(1,0), include.mean = TRUE),
                     distribution.model = "norm")
