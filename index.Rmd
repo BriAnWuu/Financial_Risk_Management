@@ -368,8 +368,23 @@ returns <- indexData[(idx_DATE - 999):idx_DATE, c("Date", "SPX.Return", "VIX.Ret
 returns
 ```
 
-### Model Log Returns using ARMA and GARCH
-{equation}
+### Model Log Returns using ARMA model and GARCH model
+ARMA (Autoregressive Moving Average):
+
+* ARMA model is used to represent a stationary time series as a combination of autoregressive (AR) and moving average (MA) processes.
+* The AR part captures the linear relationship between an observation and a certain number of lagged (past) observations.
+* The MA part captures the linear dependence between an observation and a stochastic term based on past errors.
+* ARMA model is usually referred to as ARMA(p,q) where p is the order of AR and q is the order of MA.
+
+GARCH (Generalized Autoregressive Conditional Heteroskedasticity):
+
+* GARCH is a statistical model used in analyzing time-series data where the variance error is believed to be serially autocorrelated.
+* GARCH model extends the basic ARMA framework to account for time-varying volatility and volatility clustering in time series.
+* The ARCH part captures the conditional variance of the time series, which depends on past errors.
+* GARCH model is usually referred as GARCH(p,q) where p is the order of ARCH and q is the order of GARCH.
+
+Both ARMA model and GARCH model require estimation of parameters, and is often done using maximum likelihood estimation (MLE) or other estimation techniques. 
+
 ```{r}
 # Univariate GARCH specification prior to fitting
 
