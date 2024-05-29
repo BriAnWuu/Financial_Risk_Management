@@ -3286,25 +3286,43 @@ VIXz &lt;- fitVIX@fit$z
 DCCcoef &lt;- fitDcc@mfit$coef
 DCCQ &lt;- fitDcc@mfit$Q</code></pre>
 </div>
-<div id="conditional-mean-variance-and-correlation-for-the-next-date" class="section level3">
-<h3>Conditional Mean, Variance, and Correlation for the next date</h3>
-<p>{equations}</p>
+<div id="compute-conditional-mean-and-variance" class="section level3">
+<h3>Compute Conditional Mean and Variance</h3>
+<p>Set up the first Realized Variance (conditional variance) for
+Evaluation Date + 1 using our GARCH model: <span class="math display">\[\hat{\sigma}^{2}_{i,t} = \omega +
+\alpha\hat{R}^{2}_{i,t-1} + \beta\sigma^{2}_{t-1}\]</span></p>
 <pre class="r"><code># Conditional mean
 SPXmean &lt;- 0
 VIXmean &lt;- VIXcoef[&quot;mu&quot;] + VIXcoef[&quot;ar1&quot;] * returns[1000, &quot;VIX.Return&quot;]
 
 # Conditional variance
 SPXvariance &lt;- SPXcoef[&quot;omega&quot;] + SPXcoef[&quot;alpha1&quot;] * returns[1000, &quot;SPX.Return&quot;]^2 + SPXcoef[&quot;beta1&quot;] * SPXsigma[1000]^2
-VIXvariance &lt;- VIXcoef[&quot;omega&quot;] + VIXcoef[&quot;alpha1&quot;] * returns[1000, &quot;VIX.Return&quot;]^2 + VIXcoef[&quot;beta1&quot;] * VIXsigma[1000]^2
-
-# Conditional correlation
-rhobar &lt;- (1/1000) * SPXz %*% VIXz
+VIXvariance &lt;- VIXcoef[&quot;omega&quot;] + VIXcoef[&quot;alpha1&quot;] * returns[1000, &quot;VIX.Return&quot;]^2 + VIXcoef[&quot;beta1&quot;] * VIXsigma[1000]^2</code></pre>
+</div>
+<div id="compute-dynamic-correlation" class="section level3">
+<h3>Compute Dynamic Correlation</h3>
+<p>Starting with the unconditional correlation <span class="math inline">\(\overline{\rho}_{12}\)</span> of asset 1 and asset
+2 (or long-run average correlation <span class="math inline">\(\overline{q}_{12}\)</span>): <span class="math display">\[\overline{\rho}_{12} =
+\frac{1}{n}\sum_{1}^{n}(\hat{z}_{1,t}\hat{z}_{2,t}) \]</span> Our DCC
+model gives the parameters <span class="math inline">\(\alpha\)</span>,
+<span class="math inline">\(\beta\)</span>, and the initial <span class="math inline">\(q\)</span>’s, so that we can calculate the <span class="math inline">\(q\)</span>’s for each time step <span class="math inline">\(t\)</span>: <span class="math display">\[q_{11, t}
+= 1 + \alpha(\hat{z}_{1,t-1}^{2} - 1) + \beta(q_{11,t-1} - 1) \]</span>
+<span class="math display">\[q_{22, t} = 1 + \alpha(\hat{z}_{2,t-1}^{2}
+- 1) + \beta(q_{22,t-1} - 1) \]</span> <span class="math display">\[q_{12, t} = \overline{\rho}_{12} +
+\alpha(\hat{z}_{1,t-1}\hat{z}_{2,t-1} - \overline{\rho}_{12}) +
+\beta(q_{12,t-1} - \overline{\rho}_{12}) \]</span> Thus, the correlation
+estimator: <span class="math display">\[\rho_{12,t} =
+\frac{q_{12,t}}{\sqrt{q_{11,t}q_{22,t}}} \]</span></p>
+<pre class="r"><code># Conditional correlation
+rhobar &lt;- (1/1000) * SPXz %*% VIXz 
 q11 &lt;- 1.0 + DCCcoef[&quot;[Joint]dcca1&quot;] * (SPXz[1000]^2 - 1) + DCCcoef[&quot;[Joint]dccb1&quot;] * (DCCQ[[1000]][1,1] - 1)
 q22 &lt;- 1.0 + DCCcoef[&quot;[Joint]dcca1&quot;] * (VIXz[1000]^2 - 1) + DCCcoef[&quot;[Joint]dccb1&quot;] * (DCCQ[[1000]][2,2] - 1)
 q12 &lt;- rhobar + DCCcoef[&quot;[Joint]dcca1&quot;] * (SPXz[1000] * VIXz[1000] - rhobar) + DCCcoef[&quot;[Joint]dccb1&quot;] * (DCCQ[[1000]][1,2] - rhobar)
-rho &lt;- q12 / sqrt(q11 * q22)
-
-# Cleaner output
+rho &lt;- q12 / sqrt(q11 * q22)</code></pre>
+</div>
+<div id="conditional-mean-variance-and-correlation" class="section level3">
+<h3>Conditional Mean, Variance, and Correlation</h3>
+<pre class="r"><code># Cleaner output
 names(VIXmean) &lt;- NULL
 names(SPXvariance) &lt;- NULL
 names(VIXvariance) &lt;- NULL
@@ -3367,8 +3385,7 @@ format(initPortValue, big.mark = &quot;,&quot;)</code></pre>
 </div>
 <div id="simulate-returns" class="section level3">
 <h3>Simulate Returns</h3>
-<p>Using parameter estimates from DCC model in previous section <a href="#conditional-mean-variance-and-correlation-for-the-next-date">DCC
-Estimates</a>.</p>
+<p>Using parameter estimates from DCC model in previous section <a href="#conditional-mean-variance-and-correlation">DCC Estimates</a>.</p>
 <pre class="r"><code>SPX_simReturn &lt;- SPXmean + sqrt(SPXvariance) * SPXz # Vector of 1000 simulated returns
 VIX_simReturn &lt;- VIXmean + sqrt(VIXvariance) * VIXz # Vector of 1000 simulated returns</code></pre>
 </div>
@@ -3426,6 +3443,7 @@ data.frame(Return = VIX_simReturn_Cut) %&gt;% # Make data frame for ggplot
 newPortValue &lt;- rep(0, 1000)
 PL &lt;- rep(0, 1000)
 
+# For 1,000 simulations
 for (i in 1:1000) {
   
   # Calculate new SPX spot value using simulated return of SPX
@@ -3452,8 +3470,7 @@ format(FHSVaR_1_day, big.mark = &quot;,&quot;)</code></pre>
 Period</strong></h2>
 <div id="simulate-returns-for-21-days-1-month" class="section level3">
 <h3>Simulate Returns for 21 Days (1 Month)</h3>
-<p>Using parameter estimates from DCC model in previous section <a href="#conditional-mean-variance-and-correlation-for-the-next-date">DCC
-Estimates</a>.</p>
+<p>Using parameter estimates from DCC model in previous section <a href="#conditional-mean-variance-and-correlation">DCC Estimates</a>.</p>
 <pre class="r"><code># Days
 n_day &lt;- 21
 
@@ -3478,6 +3495,11 @@ simMean[1, &quot;VIX&quot;] &lt;- VIXmean</code></pre>
 </div>
 <div id="simulation" class="section level3">
 <h3>Simulation</h3>
+<p>To compute Realized Return for <span class="math inline">\(t\)</span>-day horizon, simply sum up the Realized
+Returns for each day (where <span class="math inline">\(i\)</span>
+represents the <span class="math inline">\(i\)</span>th simulation):
+<span class="math display">\[\hat{R}_{i,1:t} = \sum_{1}^{t}\hat{R}_{i,t}
+\text{, for } i=1,2, \dots ,FH\]</span></p>
 <pre class="r"><code>set.seed(123)
 
 # Vector used to hold 21-day returns
@@ -3488,6 +3510,7 @@ newTau &lt;- t - 31/365
 newPortValue &lt;- rep(0, 5000)
 PL &lt;- rep(0, 5000)
 
+# For 5,000 simulations
 for (i in 1:5000) {
   # Draw a sample of 21 shocks to use for 21 days
   shock &lt;- Z[sample(1:1000, size = n_day, replace = TRUE), ]
@@ -3507,7 +3530,7 @@ for (i in 1:5000) {
     simReturn[j, ] &lt;- simMean[j, ] + sqrt(simVariance[j, ]) * shock[j, ]
   }
   
-  # Store simulated 21-day return
+  # Store simulated 21-day return by summing up log returns
   SPX_simReturn_21[i] &lt;- sum(simReturn$SPX)
   VIX_simReturn_21[i] &lt;- sum(simReturn$VIX)
   

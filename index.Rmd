@@ -440,8 +440,9 @@ DCCcoef <- fitDcc@mfit$coef
 DCCQ <- fitDcc@mfit$Q
 ```
 
-### Conditional Mean, Variance, and Correlation for the next date
-{equations}
+### Compute Conditional Mean and Variance
+Set up the first Realized Variance (conditional variance) for Evaluation Date + 1 using our GARCH model:
+$$\hat{\sigma}^{2}_{i,t} = \omega + \alpha\hat{R}^{2}_{i,t-1} + \beta\sigma^{2}_{t-1}$$
 ```{r}
 # Conditional mean
 SPXmean <- 0
@@ -450,14 +451,29 @@ VIXmean <- VIXcoef["mu"] + VIXcoef["ar1"] * returns[1000, "VIX.Return"]
 # Conditional variance
 SPXvariance <- SPXcoef["omega"] + SPXcoef["alpha1"] * returns[1000, "SPX.Return"]^2 + SPXcoef["beta1"] * SPXsigma[1000]^2
 VIXvariance <- VIXcoef["omega"] + VIXcoef["alpha1"] * returns[1000, "VIX.Return"]^2 + VIXcoef["beta1"] * VIXsigma[1000]^2
+```
 
+### Compute Dynamic Correlation
+Starting with the unconditional correlation $\overline{\rho}_{12}$ of asset 1 and asset 2 (or long-run average correlation $\overline{q}_{12}$):
+$$\overline{\rho}_{12} = \frac{1}{n}\sum_{1}^{n}(\hat{z}_{1,t}\hat{z}_{2,t}) $$
+Our DCC model gives the parameters $\alpha$, $\beta$, and the initial $q$'s, so that we can calculate the $q$'s for each time step $t$:
+$$q_{11, t} = 1 + \alpha(\hat{z}_{1,t-1}^{2} - 1) + \beta(q_{11,t-1} - 1) $$
+$$q_{22, t} = 1 + \alpha(\hat{z}_{2,t-1}^{2} - 1) + \beta(q_{22,t-1} - 1) $$
+$$q_{12, t} = \overline{\rho}_{12} + \alpha(\hat{z}_{1,t-1}\hat{z}_{2,t-1} - \overline{\rho}_{12}) + \beta(q_{12,t-1} - \overline{\rho}_{12}) $$
+Thus, the correlation estimator:
+$$\rho_{12,t} = \frac{q_{12,t}}{\sqrt{q_{11,t}q_{22,t}}} $$
+```{r}
 # Conditional correlation
-rhobar <- (1/1000) * SPXz %*% VIXz
+rhobar <- (1/1000) * SPXz %*% VIXz 
 q11 <- 1.0 + DCCcoef["[Joint]dcca1"] * (SPXz[1000]^2 - 1) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][1,1] - 1)
 q22 <- 1.0 + DCCcoef["[Joint]dcca1"] * (VIXz[1000]^2 - 1) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][2,2] - 1)
 q12 <- rhobar + DCCcoef["[Joint]dcca1"] * (SPXz[1000] * VIXz[1000] - rhobar) + DCCcoef["[Joint]dccb1"] * (DCCQ[[1000]][1,2] - rhobar)
 rho <- q12 / sqrt(q11 * q22)
+```
 
+
+### Conditional Mean, Variance, and Correlation
+```{r}
 # Cleaner output
 names(VIXmean) <- NULL
 names(SPXvariance) <- NULL
@@ -471,6 +487,7 @@ SPXvariance
 VIXvariance
 rho
 ```
+
 
 ### Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at Risk)
 {equation}
@@ -513,7 +530,7 @@ format(initPortValue, big.mark = ",")
 ```
 
 ### Simulate Returns
-Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].  
+Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation].  
 
 ```{r}
 SPX_simReturn <- SPXmean + sqrt(SPXvariance) * SPXz # Vector of 1000 simulated returns
@@ -576,6 +593,7 @@ newTau <- t - 3/365
 newPortValue <- rep(0, 1000)
 PL <- rep(0, 1000)
 
+# For 1,000 simulations
 for (i in 1:1000) {
   
   # Calculate new SPX spot value using simulated return of SPX
@@ -599,7 +617,7 @@ format(FHSVaR_1_day, big.mark = ",")
 ## **Filtered Historical Simulation VaR for 1-Month Holding Period**
 
 ### Simulate Returns for 21 Days (1 Month)
-Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
+Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation].
 ```{r}
 # Days
 n_day <- 21
@@ -625,6 +643,8 @@ simMean[1, "VIX"] <- VIXmean
 ```
 
 ### Simulation
+To compute Realized Return for $t$-day horizon, simply sum up the Realized Returns for each day (where $i$ represents the $i$th simulation):
+$$\hat{R}_{i,1:t} = \sum_{1}^{t}\hat{R}_{i,t} \text{, for } i=1,2, \dots ,FH$$
 ```{r}
 set.seed(123)
 
@@ -636,6 +656,7 @@ newTau <- t - 31/365
 newPortValue <- rep(0, 5000)
 PL <- rep(0, 5000)
 
+# For 5,000 simulations
 for (i in 1:5000) {
   # Draw a sample of 21 shocks to use for 21 days
   shock <- Z[sample(1:1000, size = n_day, replace = TRUE), ]
@@ -655,7 +676,7 @@ for (i in 1:5000) {
     simReturn[j, ] <- simMean[j, ] + sqrt(simVariance[j, ]) * shock[j, ]
   }
   
-  # Store simulated 21-day return
+  # Store simulated 21-day return by summing up log returns
   SPX_simReturn_21[i] <- sum(simReturn$SPX)
   VIX_simReturn_21[i] <- sum(simReturn$VIX)
   
