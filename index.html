@@ -3242,18 +3242,16 @@ fitVIX &lt;- ugarchfit(spec = spec2, data = returns$VIX.Return)</code></pre>
 </div>
 <div id="garch-coefficients" class="section level3">
 <h3>GARCH Coefficients</h3>
-<p>For time step <span class="math inline">\(t=1\)</span> (Evaluation
-Date + 1) of the <span class="math inline">\(i\)</span>th simulation,
-where <span class="math inline">\(\sigma\)</span> is known on Evaluation
-Date: <span class="math display">\[\hat{R}_{i,1} =
-\sigma_{1}\hat{z}_{i,1}, \text{with } z \sim{N(0,1)} \]</span> The
-Realized Variance for time step <span class="math inline">\(t\)</span>
-of the <span class="math inline">\(i\)</span>th simulation, where <span class="math inline">\(\omega\)</span>, <span class="math inline">\(\alpha\)</span>, and <span class="math inline">\(\beta\)</span> are estimated parameters from MLE:
+<p>We set the Realized Return for time step <span class="math inline">\(t=1\)</span> (Evaluation Date + 1) of the <span class="math inline">\(i\)</span>th simulation, where <span class="math inline">\(\sigma\)</span> is known on Evaluation Date: <span class="math display">\[\hat{R}_{i,1} = \sigma_{1}\hat{z}_{i,1} \text{ ,
+with } \hat{z} \sim{N(0,1)} \]</span> The Realized Variance for time
+step <span class="math inline">\(t\)</span> of the <span class="math inline">\(i\)</span>th simulation, where <span class="math inline">\(\omega\)</span>, <span class="math inline">\(\alpha\)</span>, and <span class="math inline">\(\beta\)</span> are estimated parameters from MLE:
 <span class="math display">\[\hat{\sigma}^{2}_{i,t} = \omega +
 \alpha\hat{R}^{2}_{i,t-1} + \beta\sigma^{2}_{t-1}\]</span> The Realized
 Return for time step <span class="math inline">\(t&gt;=2\)</span> of the
 <span class="math inline">\(i\)</span>th simulation: <span class="math display">\[\hat{R}_{i,t} =
-\hat{\sigma}_{i,t}\hat{z}_{i,t}\]</span></p>
+\hat{\sigma}_{i,t}\hat{z}_{i,t}\]</span> The number of total time steps
+<span class="math inline">\(t\)</span> depends on the holding period of
+the portfolio.</p>
 <pre class="r"><code># GARCH coefficients
 coef(fitSPX)</code></pre>
 <pre><code>##          omega         alpha1          beta1 
@@ -3264,7 +3262,6 @@ coef(fitSPX)</code></pre>
 </div>
 <div id="estimation-of-the-dcc-model" class="section level3">
 <h3>Estimation of the DCC model</h3>
-<p>{equation}</p>
 <pre class="r"><code>multiSpec &lt;- multispec(c(spec1, spec2))
 dccSpec &lt;- dccspec(multiSpec, dccOrder = c(1,1), model = &quot;DCC&quot;, distribution = &quot;mvnorm&quot;)
 fitDcc &lt;- dccfit(dccSpec,returns[, c(&quot;SPX.Return&quot;, &quot;VIX.Return&quot;)])
@@ -3295,7 +3292,6 @@ DCCQ &lt;- fitDcc@mfit$Q</code></pre>
 <pre class="r"><code># Conditional mean
 SPXmean &lt;- 0
 VIXmean &lt;- VIXcoef[&quot;mu&quot;] + VIXcoef[&quot;ar1&quot;] * returns[1000, &quot;VIX.Return&quot;]
-
 
 # Conditional variance
 SPXvariance &lt;- SPXcoef[&quot;omega&quot;] + SPXcoef[&quot;alpha1&quot;] * returns[1000, &quot;SPX.Return&quot;]^2 + SPXcoef[&quot;beta1&quot;] * SPXsigma[1000]^2

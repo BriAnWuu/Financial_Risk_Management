@@ -404,12 +404,13 @@ fitVIX <- ugarchfit(spec = spec2, data = returns$VIX.Return)
 ```
 
 ### GARCH Coefficients
-For time step $t=1$ (Evaluation Date + 1) of the $i$th simulation, where $\sigma$ is known on Evaluation Date:
-$$\hat{R}_{i,1} = \sigma_{1}\hat{z}_{i,1}, \text{with } z \sim{N(0,1)} $$
+We set the Realized Return for time step $t=1$ (Evaluation Date + 1) of the $i$th simulation, where $\sigma$ is known on Evaluation Date:
+$$\hat{R}_{i,1} = \sigma_{1}\hat{z}_{i,1} \text{ , with } \hat{z} \sim{N(0,1)} $$
 The Realized Variance for time step $t$ of the $i$th simulation, where $\omega$, $\alpha$, and $\beta$ are estimated parameters from MLE:
 $$\hat{\sigma}^{2}_{i,t} = \omega + \alpha\hat{R}^{2}_{i,t-1} + \beta\sigma^{2}_{t-1}$$
 The Realized Return for time step $t>=2$ of the $i$th simulation:
 $$\hat{R}_{i,t} = \hat{\sigma}_{i,t}\hat{z}_{i,t}$$
+The number of total time steps $t$ depends on the holding period of the portfolio.
 ```{r}
 # GARCH coefficients
 coef(fitSPX)
@@ -418,7 +419,6 @@ coef(fitVIX) # With extra parameters, mu and ar1, for ARMA(1,0)
 
 
 ### Estimation of the DCC model
-{equation}
 ```{r}
 multiSpec <- multispec(c(spec1, spec2))
 dccSpec <- dccspec(multiSpec, dccOrder = c(1,1), model = "DCC", distribution = "mvnorm")
@@ -446,7 +446,6 @@ DCCQ <- fitDcc@mfit$Q
 # Conditional mean
 SPXmean <- 0
 VIXmean <- VIXcoef["mu"] + VIXcoef["ar1"] * returns[1000, "VIX.Return"]
-
 
 # Conditional variance
 SPXvariance <- SPXcoef["omega"] + SPXcoef["alpha1"] * returns[1000, "SPX.Return"]^2 + SPXcoef["beta1"] * SPXsigma[1000]^2
@@ -514,7 +513,8 @@ format(initPortValue, big.mark = ",")
 ```
 
 ### Simulate Returns
-Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].
+Using parameter estimates from DCC model in previous section [DCC Estimates][Conditional Mean, Variance, and Correlation for the next date].  
+
 ```{r}
 SPX_simReturn <- SPXmean + sqrt(SPXvariance) * SPXz # Vector of 1000 simulated returns
 VIX_simReturn <- VIXmean + sqrt(VIXvariance) * VIXz # Vector of 1000 simulated returns
