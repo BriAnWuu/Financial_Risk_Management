@@ -122,12 +122,12 @@ Linear Interpolation of interest rate:
 $$R_{n} = R_{1} + \frac{R_{2} - R_{1}}{t_{2} - t_{1}} * (t_{n} - t_{1})$$  
 where:
 \begin{align*}
-& R_{n} = \text{unknown rate}  \\
-& R_{1} = \text{rate for the shorter designated maturity (nearest to the reset date)}  \\
-& R_{2} = \text{rate for the longer designated maturity (nearest to the reset date)}  \\
-& t_{n} = \text{number of calendar days to expiry of option}  \\
-& t_{1} = \text{number of calendar days to the shorter designated maturity}  \\
-& t_{2} = \text{number of calendar days to the longer designated maturity}  
+R_{n} & = \text{unknown rate}  \\
+R_{1} & = \text{rate for the shorter designated maturity (nearest to the reset date)}  \\
+R_{2} & = \text{rate for the longer designated maturity (nearest to the reset date)}  \\
+t_{n} & = \text{number of calendar days to expiry of option}  \\
+t_{1} & = \text{number of calendar days to the shorter designated maturity}  \\
+t_{2} & = \text{number of calendar days to the longer designated maturity}  
 \end{align*}
 ```{r}
 rates <- rep(0, n)
@@ -176,13 +176,13 @@ $$d_{1} = \frac{\ln(\frac{S}{K}) + (r - q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt
 $$d_{2} = d_{1} - \sigma\sqrt{t}$$
 where:
 \begin{align*}
-& S = \text{Spot price of underlying asset}  \\
-& K = \text{Strike price}  \\
-& r = \text{Interest rate}  \\
-& q = \text{Dividend yield of underlying asset}  \\
-& \sigma = \text{Volatility}  \\
-& t = \text{Time to maturity}  \\
-& N() = \text{Normal distribution}  
+S & = \text{Spot price of underlying asset}  \\
+K & = \text{Strike price}  \\
+r & = \text{Interest rate}  \\
+q & = \text{Dividend yield of underlying asset}  \\
+\sigma & = \text{Volatility}  \\
+t & = \text{Time to maturity}  \\
+N() & = \text{Normal distribution}  
 \end{align*}
 ```{r}
 # Utilize R vectorization to make calculations cleaner
@@ -195,7 +195,7 @@ optionData$d1 <- ((ln(SPOT/X) + (r - q + 0.5 * sig ^ 2) * t)) / (sig * sqrt(t))
 optionData$d2 <- optionData$d1 - sig * sqrt(t)
 ```
 
-### Greeks
+### Greeks (Using Black-Scholes-Merton)
 **Delta** $\Delta$:
 
 * Delta measures the sensitivity of an option's price to changes in the price of the underlying asset.
@@ -338,9 +338,9 @@ Log Returns can be define as:
 $$z_{t} = ln(\frac{p_{t}}{p_{t-1}}) = ln(1+r_{t})$$
 where:
 \begin{align*}
-& p_{t} = \text{Price of an asset at time t}  \\
-& p_{t-1} = \text{Price of an asset at time t-1}  \\
-& r_{t} = \text{Rate (in log returns) of return at time t}
+p_{t} & = \text{Price of an asset at time t}  \\
+p_{t-1} & = \text{Price of an asset at time t-1}  \\
+r_{t} & = \text{Rate (in log returns) of return at time t}
 \end{align*}
 
 Some nice properties of Logarithmic Returns:
@@ -456,7 +456,7 @@ VIXvariance <- VIXcoef["omega"] + VIXcoef["alpha1"] * returns[1000, "VIX.Return"
 ### Compute Dynamic Correlation
 Starting with the unconditional correlation $\overline{\rho}_{12}$ of asset 1 and asset 2 (or long-run average correlation $\overline{q}_{12}$):
 $$\overline{\rho}_{12} = \frac{1}{n}\sum_{1}^{n}(\hat{z}_{1,t}\hat{z}_{2,t}) $$
-Our DCC model gives the parameters $\alpha$, $\beta$, and the initial $q$'s, so that we can calculate the $q$'s for each time step $t$:
+Our DCC model gives the parameters $\alpha$, $\beta$, and the initial $q$'s (1,000th $q$), so that we can calculate the $q$'s for each time step $t$ in the future:
 $$q_{11, t} = 1 + \alpha(\hat{z}_{1,t-1}^{2} - 1) + \beta(q_{11,t-1} - 1) $$
 $$q_{22, t} = 1 + \alpha(\hat{z}_{2,t-1}^{2} - 1) + \beta(q_{22,t-1} - 1) $$
 $$q_{12, t} = \overline{\rho}_{12} + \alpha(\hat{z}_{1,t-1}\hat{z}_{2,t-1} - \overline{\rho}_{12}) + \beta(q_{12,t-1} - \overline{\rho}_{12}) $$
@@ -490,7 +490,20 @@ rho
 
 
 ### Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at Risk)
-{equation}
+Risk mapping approach with Delta-normal method. **Mapping** is a key step that replaces the actual complicated portfolio with a simpler portfolio of approximately the same risk. Some shortcomings of computing the risks of complicated portfolios includes:
+
+1. The portfolio standard deviations can be difficult to compute, standard deviations change as the underlying asset value changes.
+
+2. The portfolio includes too many positions, where computing the covariance matrix of thousands of instruments is not feasible.
+
+Delta-normal Value at Risk:
+$$VaR=E[\Delta V]-Z*\sigma$$
+where:
+\begin{align*}
+E[\Delta V] & = \text{Expected change in portfolio value}  \\
+Z & = \text{Z-score of percentage quantile}  \\
+\sigma & = \text{Standard deviation of change in portfolio}
+\end{align*}
 ```{r}
 delta <- portfolioGreeks$Delta
 vega <- portfolioGreeks$Vega
@@ -504,13 +517,18 @@ portVariance <- delta^2 * indexData[idx_DATE, "SPX"]^2 * SPXvariance + vega^2 * 
 # Portfolio standard deviation
 portSD <- sqrt(portVariance)
 
-# Portfolio delta-normal VaR
-DNVaR <- -1.645 * (portExpectedChange - portSD)
-format(DNVaR, big.mark = ",")
+# Z-Scores: 1% -> -2.326
+#           5% -> -1.645
+#           10% -> -1.282
+
+# Portfolio delta-normal VaR at 5% (95% confidence interval)
+DNVaR <- portExpectedChange - 1.645 * portSD
+format(-DNVaR, big.mark = ",")
 ```
 
 ## **Filtered Historical Simulation**
-{equation}
+Delta-normal approach assumes normal distributions for market factors, which means we have a poor fit to the tail (our risk might be underestimated). Another limitation is that Delta-normal method relies on linear (delta) approximation that is only reasonable for portfolios with limited options.  
+We will introduce Filtered Historical Simulation ...  
 accounts for fat tail, etc.
 
 ## **Filtered Historical Simulation VaR for 1-Day Holding Period**

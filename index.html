@@ -2925,15 +2925,15 @@ optionData$time_to_expiry_days</code></pre>
 <span class="math display">\[R_{n} = R_{1} + \frac{R_{2} - R_{1}}{t_{2}
 - t_{1}} * (t_{n} - t_{1})\]</span><br />
 where: <span class="math display">\[\begin{align*}
-&amp; R_{n} = \text{unknown rate}  \\
-&amp; R_{1} = \text{rate for the shorter designated maturity (nearest to
+R_{n} &amp; = \text{unknown rate}  \\
+R_{1} &amp; = \text{rate for the shorter designated maturity (nearest to
 the reset date)}  \\
-&amp; R_{2} = \text{rate for the longer designated maturity (nearest to
+R_{2} &amp; = \text{rate for the longer designated maturity (nearest to
 the reset date)}  \\
-&amp; t_{n} = \text{number of calendar days to expiry of option}  \\
-&amp; t_{1} = \text{number of calendar days to the shorter designated
+t_{n} &amp; = \text{number of calendar days to expiry of option}  \\
+t_{1} &amp; = \text{number of calendar days to the shorter designated
 maturity}  \\
-&amp; t_{2} = \text{number of calendar days to the longer designated
+t_{2} &amp; = \text{number of calendar days to the longer designated
 maturity}  
 \end{align*}\]</span></p>
 <pre class="r"><code>rates &lt;- rep(0, n)
@@ -2985,13 +2985,13 @@ optionData$Implied.volatility</code></pre>
 where: <span class="math display">\[d_{1} = \frac{\ln(\frac{S}{K}) + (r
 - q + \frac{\sigma^{2}}{2})*t}{\sigma\sqrt{t}}\]</span> <span class="math display">\[d_{2} = d_{1} - \sigma\sqrt{t}\]</span> where:
 <span class="math display">\[\begin{align*}
-&amp; S = \text{Spot price of underlying asset}  \\
-&amp; K = \text{Strike price}  \\
-&amp; r = \text{Interest rate}  \\
-&amp; q = \text{Dividend yield of underlying asset}  \\
-&amp; \sigma = \text{Volatility}  \\
-&amp; t = \text{Time to maturity}  \\
-&amp; N() = \text{Normal distribution}  
+S &amp; = \text{Spot price of underlying asset}  \\
+K &amp; = \text{Strike price}  \\
+r &amp; = \text{Interest rate}  \\
+q &amp; = \text{Dividend yield of underlying asset}  \\
+\sigma &amp; = \text{Volatility}  \\
+t &amp; = \text{Time to maturity}  \\
+N() &amp; = \text{Normal distribution}  
 \end{align*}\]</span></p>
 <pre class="r"><code># Utilize R vectorization to make calculations cleaner
 X &lt;- optionData$Strike.Price
@@ -3002,8 +3002,8 @@ t &lt;- optionData$time_to_expiry_years
 optionData$d1 &lt;- ((ln(SPOT/X) + (r - q + 0.5 * sig ^ 2) * t)) / (sig * sqrt(t))
 optionData$d2 &lt;- optionData$d1 - sig * sqrt(t)</code></pre>
 </div>
-<div id="greeks" class="section level3">
-<h3>Greeks</h3>
+<div id="greeks-using-black-scholes-merton" class="section level3">
+<h3>Greeks (Using Black-Scholes-Merton)</h3>
 <p><strong>Delta</strong> <span class="math inline">\(\Delta\)</span>:</p>
 <ul>
 <li>Delta measures the sensitivity of an option’s price to changes in
@@ -3145,9 +3145,9 @@ indexData</code></pre>
 <h3>Compute Index Log Return</h3>
 <p>Log Returns can be define as: <span class="math display">\[z_{t} =
 ln(\frac{p_{t}}{p_{t-1}}) = ln(1+r_{t})\]</span> where: <span class="math display">\[\begin{align*}
-&amp; p_{t} = \text{Price of an asset at time t}  \\
-&amp; p_{t-1} = \text{Price of an asset at time t-1}  \\
-&amp; r_{t} = \text{Rate (in log returns) of return at time t}
+p_{t} &amp; = \text{Price of an asset at time t}  \\
+p_{t-1} &amp; = \text{Price of an asset at time t-1}  \\
+r_{t} &amp; = \text{Rate (in log returns) of return at time t}
 \end{align*}\]</span></p>
 <p>Some nice properties of Logarithmic Returns:</p>
 <ol style="list-style-type: decimal">
@@ -3305,10 +3305,10 @@ VIXvariance &lt;- VIXcoef[&quot;omega&quot;] + VIXcoef[&quot;alpha1&quot;] * ret
 2 (or long-run average correlation <span class="math inline">\(\overline{q}_{12}\)</span>): <span class="math display">\[\overline{\rho}_{12} =
 \frac{1}{n}\sum_{1}^{n}(\hat{z}_{1,t}\hat{z}_{2,t}) \]</span> Our DCC
 model gives the parameters <span class="math inline">\(\alpha\)</span>,
-<span class="math inline">\(\beta\)</span>, and the initial <span class="math inline">\(q\)</span>’s, so that we can calculate the <span class="math inline">\(q\)</span>’s for each time step <span class="math inline">\(t\)</span>: <span class="math display">\[q_{11, t}
-= 1 + \alpha(\hat{z}_{1,t-1}^{2} - 1) + \beta(q_{11,t-1} - 1) \]</span>
-<span class="math display">\[q_{22, t} = 1 + \alpha(\hat{z}_{2,t-1}^{2}
-- 1) + \beta(q_{22,t-1} - 1) \]</span> <span class="math display">\[q_{12, t} = \overline{\rho}_{12} +
+<span class="math inline">\(\beta\)</span>, and the initial <span class="math inline">\(q\)</span>’s (1,000th <span class="math inline">\(q\)</span>), so that we can calculate the <span class="math inline">\(q\)</span>’s for each time step <span class="math inline">\(t\)</span> in the future: <span class="math display">\[q_{11, t} = 1 + \alpha(\hat{z}_{1,t-1}^{2} - 1) +
+\beta(q_{11,t-1} - 1) \]</span> <span class="math display">\[q_{22, t} =
+1 + \alpha(\hat{z}_{2,t-1}^{2} - 1) + \beta(q_{22,t-1} - 1) \]</span>
+<span class="math display">\[q_{12, t} = \overline{\rho}_{12} +
 \alpha(\hat{z}_{1,t-1}\hat{z}_{2,t-1} - \overline{\rho}_{12}) +
 \beta(q_{12,t-1} - \overline{\rho}_{12}) \]</span> Thus, the correlation
 estimator: <span class="math display">\[\rho_{12,t} =
@@ -3343,7 +3343,24 @@ SPXmean</code></pre>
 <div id="portfolio-expected-change-variance-and-delta-normal-var-value-at-risk" class="section level3">
 <h3>Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at
 Risk)</h3>
-<p>{equation}</p>
+<p>Risk mapping approach with Delta-normal method.
+<strong>Mapping</strong> is a key step that replaces the actual
+complicated portfolio with a simpler portfolio of approximately the same
+risk. Some shortcomings of computing the risks of complicated portfolios
+includes:</p>
+<ol style="list-style-type: decimal">
+<li><p>The portfolio standard deviations can be difficult to compute,
+standard deviations change as the underlying asset value
+changes.</p></li>
+<li><p>The portfolio includes too many positions, where computing the
+covariance matrix of thousands of instruments is not feasible.</p></li>
+</ol>
+<p>Delta-normal Value at Risk: <span class="math display">\[VaR=E[\Delta
+V]-Z*\sigma\]</span> where: <span class="math display">\[\begin{align*}
+E[\Delta V] &amp; = \text{Expected change in portfolio value}  \\
+Z &amp; = \text{Z-score of percentage quantile}  \\
+\sigma &amp; = \text{Standard deviation of change in portfolio}
+\end{align*}\]</span></p>
 <pre class="r"><code>delta &lt;- portfolioGreeks$Delta
 vega &lt;- portfolioGreeks$Vega
 
@@ -3356,15 +3373,25 @@ portVariance &lt;- delta^2 * indexData[idx_DATE, &quot;SPX&quot;]^2 * SPXvarianc
 # Portfolio standard deviation
 portSD &lt;- sqrt(portVariance)
 
-# Portfolio delta-normal VaR
-DNVaR &lt;- -1.645 * (portExpectedChange - portSD)
-format(DNVaR, big.mark = &quot;,&quot;)</code></pre>
-<pre><code>## [1] &quot;117,038,338&quot;</code></pre>
+# Z-Scores: 1% -&gt; -2.326
+#           5% -&gt; -1.645
+#           10% -&gt; -1.282
+
+# Portfolio delta-normal VaR at 5% (95% confidence interval)
+DNVaR &lt;- portExpectedChange - 1.645 * portSD
+format(-DNVaR, big.mark = &quot;,&quot;)</code></pre>
+<pre><code>## [1] &quot;118,391,567&quot;</code></pre>
 </div>
 </div>
 <div id="filtered-historical-simulation" class="section level2">
 <h2><strong>Filtered Historical Simulation</strong></h2>
-<p>{equation} accounts for fat tail, etc.</p>
+<p>Delta-normal approach assumes normal distributions for market
+factors, which means we have a poor fit to the tail (our risk might be
+underestimated). Another limitation is that Delta-normal method relies
+on linear (delta) approximation that is only reasonable for portfolios
+with limited options.<br />
+We will introduce Filtered Historical Simulation …<br />
+accounts for fat tail, etc.</p>
 </div>
 <div id="filtered-historical-simulation-var-for-1-day-holding-period" class="section level2">
 <h2><strong>Filtered Historical Simulation VaR for 1-Day Holding
