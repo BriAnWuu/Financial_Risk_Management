@@ -3389,16 +3389,23 @@ factors, which means we have a poor fit to the tail (our risk might be
 underestimated). Another limitation is that Delta-normal method is quite
 inaccurate for large moves of the underlying.</p>
 <p>We will introduce <strong>Filtered Historical Simulation (Scaled
-model)</strong>, which is an adaptation of its first generation,
-Historical Simulation (Unscaled model). Filtered Historical Simulation
-models scale the historical data based on some estimate of current
-conditions and have <a href="https://www.bankofengland.co.uk/-/media/boe/files/working-paper/2015/filtered-historical-simulation-value-at-risk-models-and-their-competitors.pdf">demonstrated
-improved risk estimates</a> compared to the first generation VaR. Thus
-these models have become widely used by financial institutions.</p>
+model)</strong>, an advanced adaptation of the first generation,
+Historical Simulation (Unscaled) model. Filtered Historical Simulation
+models scale the historical data based on some estimates of current
+market conditions and have <a href="https://www.bankofengland.co.uk/-/media/boe/files/working-paper/2015/filtered-historical-simulation-value-at-risk-models-and-their-competitors.pdf">demonstrated
+improved risk estimates</a> compared to the first generation VaR. Thus,
+FHS models have become widely used by financial institutions.</p>
+<p>FHS VaR offers several strengths. It effectively captures market
+dynamics under current conditions by leveraging recent historical data,
+ensuring risk estimates reflect up-to-date market behavior. FHS VaR also
+excels at identifying tail risks, accounting for extreme events often
+underestimated by models assuming normal distributions. Additionally,
+FHS VaR is flexible and can be applied to various asset classes,
+ensuring relevant risk assessments across different market
+environments.</p>
 </div>
-<div id="filtered-historical-simulation-var-for-1-day-holding-period" class="section level2">
-<h2><strong>Filtered Historical Simulation VaR for 1-Day Holding
-Period</strong></h2>
+<div id="fhs-var-for-1-day-holding-period" class="section level2">
+<h2><strong>FHS VaR for 1-Day Holding Period</strong></h2>
 <div id="portfolio-value-on-evaluation-date" class="section level3">
 <h3>Portfolio Value on Evaluation Date</h3>
 <pre class="r"><code>X &lt;- optionData$Strike.Price
@@ -3495,9 +3502,8 @@ format(FHSVaR_1_day, big.mark = &quot;,&quot;)</code></pre>
 ## &quot;70,626,109&quot;</code></pre>
 </div>
 </div>
-<div id="filtered-historical-simulation-var-for-1-month-holding-period" class="section level2">
-<h2><strong>Filtered Historical Simulation VaR for 1-Month Holding
-Period</strong></h2>
+<div id="fhs-var-for-1-month-holding-period" class="section level2">
+<h2><strong>FHS VaR for 1-Month Holding Period</strong></h2>
 <div id="simulate-returns-for-21-days-1-month" class="section level3">
 <h3>Simulate Returns for 21 Days (1 Month)</h3>
 <p>Using parameter estimates from DCC model in previous section <a href="#conditional-mean-variance-and-correlation">DCC Estimates</a>.</p>
