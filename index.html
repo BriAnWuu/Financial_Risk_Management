@@ -3343,20 +3343,19 @@ SPXmean</code></pre>
 <div id="portfolio-expected-change-variance-and-delta-normal-var-value-at-risk" class="section level3">
 <h3>Portfolio Expected Change, Variance, and Delta-Normal VaR (Value at
 Risk)</h3>
-<p>Risk mapping approach with Delta-normal method.
-<strong>Mapping</strong> is a key step that replaces the actual
+<p><strong>Risk Mapping</strong> is a key step that replaces the actual
 complicated portfolio with a simpler portfolio of approximately the same
 risk. Some shortcomings of computing the risks of complicated portfolios
 includes:</p>
-<ol style="list-style-type: decimal">
-<li><p>The portfolio standard deviations can be difficult to compute,
-standard deviations change as the underlying asset value
-changes.</p></li>
-<li><p>The portfolio includes too many positions, where computing the
-covariance matrix of thousands of instruments is not feasible.</p></li>
-</ol>
-<p>Delta-normal Value at Risk: <span class="math display">\[VaR=E[\Delta
-V]-Z*\sigma\]</span> where: <span class="math display">\[\begin{align*}
+<ul>
+<li>The portfolio standard deviations can be difficult to compute,
+standard deviations change as the underlying asset value changes.</li>
+<li>The portfolio includes too many positions, where computing the
+covariance matrix of thousands of instruments is not feasible.</li>
+</ul>
+<p>Therefore, we introduce a risk mapping solution, Delta-normal Value
+at Risk: <span class="math display">\[VaR=E[\Delta V]-Z*\sigma\]</span>
+where: <span class="math display">\[\begin{align*}
 E[\Delta V] &amp; = \text{Expected change in portfolio value}  \\
 Z &amp; = \text{Z-score of percentage quantile}  \\
 \sigma &amp; = \text{Standard deviation of change in portfolio}
@@ -3387,11 +3386,15 @@ format(-DNVaR, big.mark = &quot;,&quot;)</code></pre>
 <h2><strong>Filtered Historical Simulation</strong></h2>
 <p>Delta-normal approach assumes normal distributions for market
 factors, which means we have a poor fit to the tail (our risk might be
-underestimated). Another limitation is that Delta-normal method relies
-on linear (delta) approximation that is only reasonable for portfolios
-with limited options.<br />
-We will introduce Filtered Historical Simulation …<br />
-accounts for fat tail, etc.</p>
+underestimated). Another limitation is that Delta-normal method is quite
+inaccurate for large moves of the underlying.</p>
+<p>We will introduce <strong>Filtered Historical Simulation (Scaled
+model)</strong>, which is an adaptation of its first generation,
+Historical Simulation (Unscaled model). Filtered Historical Simulation
+models scale the historical data based on some estimate of current
+conditions and have <a href="https://www.bankofengland.co.uk/-/media/boe/files/working-paper/2015/filtered-historical-simulation-value-at-risk-models-and-their-competitors.pdf">demonstrated
+improved risk estimates</a> compared to the first generation VaR. Thus
+these models have become widely used by financial institutions.</p>
 </div>
 <div id="filtered-historical-simulation-var-for-1-day-holding-period" class="section level2">
 <h2><strong>Filtered Historical Simulation VaR for 1-Day Holding
